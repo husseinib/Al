@@ -4,6 +4,7 @@
   "description": "1. Clone the repository\r 2. Run the following command in the terminal\r ```bash",
   "main": "index.js",
   "scripts": {
+    "deploy": "gh-pages -d dist",
     "production": "webpack --mode production --config webpack.config.prod.js",
     "build": "webpack --mode development --config webpack.config.dev.js",
     "start": "webpack-dev-server --config webpack.config.dev.js"
@@ -12,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "gh-pages": "^6.1.1",
     "pixi.js": "^8.1.1"
   },
   "devDependencies": {
