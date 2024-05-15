@@ -1,40 +1,34 @@
-import { Application, Assets, Sprite, Container, Graphics, GraphicsContext, autoDetectRenderer } from 'pixi.js';
-import CombinedShape from './CombinedShape';
+import { Application, Assets, Container, Graphics, GraphicsContext, Rectangle, Polygon } from 'pixi.js';
+import { Viewport } from 'pixi-viewport'
+import { SliderView } from "@masatomakino/pixijs-basic-scrollbar";
 
 const app = new Application();
 await app.init({ background: '#1099bb', resizeTo: window });
 document.body.appendChild(app.canvas);
 
-const layersCount = 10;
-let muralVisible = false;
-let backgroundTexture, frameTexture, mapTexture, firstCityTexture, secondCityTexture;
+const layersCount = 25;
+const globalXScale = 1;
+const globalYScale = 1;
+let viewport;
+let backgroundTexture;
 let layerTextures = [];
 let layersHoverTextures = [];
-let backgroundSprite, frameSprite, mapSprite, firstCitySprite, secondCitySprite;
-let layerSprites = [];
-let shapesgfx = [];
-let mapContainer;
-let muralContainer;
+let bgGraphics;
+let layerGraphics = [];
+let mapContainer, muralContainer;
 let screenWidth,
     screenHeight,
-    mapWidth,
-    mapHeight,
     imageWidth,
-    imageHeight,
-    dragTarget = null,
-    scrollLimit,
-    scrollSpeed = 1;
+    imageHeight;
 let shapes = [];
 
 importTextures()
     .then(() => {
         loadLayerShapesJson().then(() => {
-            initViewport();
+            init();
+            // initPoup();
             createElements();
-            setScrollLimit();
-            adjustSpriteSize();
-            addImageToContainer();
-            createLayerShapes();
+            updateImageSize();
         })
     })
 
@@ -49,344 +43,210 @@ async function loadLayerShapesJson() {
 }
 
 async function importTextures() {
-    backgroundTexture = await Assets.load('./assets/textures/bg.png');
-    frameTexture = await Assets.load('./assets/textures/full_frame.png');
-    mapTexture = await Assets.load('./assets/textures/map.png');
-    firstCityTexture = await Assets.load('./assets/textures/first_city.png');
-    secondCityTexture = await Assets.load('./assets/textures/second_city.png');
-    for (let i = 1; i <= 10; i++) {
-        layerTextures.push(await Assets.load(`./assets/textures/frames/Frame-${i}.png`));
-        layersHoverTextures.push(await Assets.load(`./assets/textures/frames/Frame-${i}-hover.png`));
+    backgroundTexture = await Assets.load('./assets/textures/background.png');
+    for (let i = 2; i <= 27; i++) {
+        layerTextures.push(await Assets.load(`./assets/textures/frames/${i}.png`));
+        try {
+            layersHoverTextures.push(await Assets.load(`./assets/textures/frames/${i}-Hover.png`));
+        } catch (error) {
+            layersHoverTextures.push(await Assets.load(`./assets/textures/frames/${i}.png`));
+        }
     }
 }
 
-function initViewport() {
-    screenWidth = window.innerWidth;
-    screenHeight = window.innerHeight
-    imageWidth = screenWidth;
-    imageHeight = screenHeight;
-}
-
-function createElements() {
-    // createMapBackground();
-    // createFirstCity();
-    // createSecondCity();
-    createBackground();
-    // createFrame();
-    createLayers();
-
-    mapContainer = new Container();
-    muralContainer = new Container();
-    // muralContainer.visible = true;
-    // muralContainer.zIndex = 1;
-    // mapContainer.zIndex = 2;
-    // app.stage.addChild(muralContainer);
-    // app.stage.addChild(mapContainer);
-}
-
-function setScrollLimit() {
+function init() {
     const imageRatio = backgroundTexture.width / backgroundTexture.height;
     if (imageRatio > screenWidth / screenHeight) {0
         imageWidth = screenHeight * imageRatio;
     } else {
         imageHeight = screenWidth / imageRatio;
     }
-    scrollLimit = imageWidth - screenWidth;
+
+    const worldWidth = imageWidth * globalXScale;
+    const worldHeight = imageHeight * globalYScale;
+    viewport = new Viewport({
+        screenWidth: window.innerWidth,
+        screenHeight: window.innerHeight,
+        worldWidth: worldWidth,
+        worldHeight: worldHeight,
+        events: app.renderer.events
+    })
+    viewport.drag({ 
+        direction: 'x',
+        factor: 0.3,
+        lineHeight: 20,
+    }).decelerate({ friction: 0.95 }).wheel({
+        percent: 0.1,
+    })
+    viewport.clampZoom({
+        minScale: 1,
+        maxScale: 1,
+    });
+    viewport.moveCenter(-180, app.screen.height / 2);
+    // viewport.on('drag-end', function() {
+    //     if(this.getVisibleBounds().x > 0 || this.getVisibleBounds().y > 0) {
+    //         this.ensureVisible(0,0);
+    //     }
+    // });
+    // viewport.clamp({
+    // //     direction: 'all',
+    //     left: -1140,
+    //     right: 1140,
+    // })
+    // viewport.bounce({
+    //     sides: 'horizontal',
+    //     friction: 0,
+    //     time: 1,
+    // });
+    const line = new Graphics().rect(0, 0, worldWidth, worldHeight).fill('white');
+    viewport.addChild(line);
+    app.stage.addChild(viewport)
+
+    mapContainer = new Container();
+    muralContainer = new Container();
+    screenWidth = window.innerWidth;
+    screenHeight = window.innerHeight
+    imageWidth = screenWidth;
+    imageHeight = screenHeight;
 }
 
-function adjustSpriteSize() {
-    if (mapSprite) {
-        mapSprite.width = imageWidth;
-        mapSprite.height = imageHeight;
-    }
-
-    if(firstCitySprite) {
-        firstCitySprite.width = imageWidth;
-        firstCitySprite.height = imageHeight;
-    }
-
-    if(secondCitySprite) {
-        secondCitySprite.width = imageWidth;
-        secondCitySprite.height = imageHeight;
-    }
-
-    if (backgroundSprite) {
-        backgroundSprite.width = imageWidth;
-        backgroundSprite.height = imageHeight;
-    }
-    if (frameSprite) {
-        frameSprite.width = imageWidth;
-        frameSprite.height = imageHeight;
-    }
-
-    if (layerSprites.length > 0) {
-        layerSprites.forEach(layerSprite => {
-            layerSprite.width = imageWidth;
-            layerSprite.height = imageHeight;
-        });
-    }
+function initPoup() {
+    const baseBgContext = new GraphicsContext()
+        .rect(0, 0, 320, 50)
+        .fill(0x000000, 0.5)
+    let baseBgGraphics = new Graphics(baseBgContext);
+    const slider = new SliderView({
+        base: baseBgGraphics,
+        // bar: new Graphics(...),
+        // button: new Graphics(...),
+        // mask: new Graphics(...),
+        minPosition: 0,
+        maxPosition: 320, //slider width
+        rate: 0.0,
+        canvas : app.canvas,
+    });
+    
+    slider.on("slider_change", e => {
+        console.log(e.rate);
+    });
+    app.stage.addChild(slider);
 }
 
-function addImageToContainer() {
-    if (mapSprite)
-        mapContainer.addChild(mapSprite);
-    if (firstCitySprite)
-        mapContainer.addChild(firstCitySprite);
-    if (secondCitySprite)
-        mapContainer.addChild(secondCitySprite);
+function createElements() {
+    muralContainer.zIndex = 1;
+    muralContainer.interactive = true;
+    muralContainer.cursor = 'move';
+    // createMapBackground();
+    // createFirstCity();
+    // createSecondCity();
+    createMuralBackground();
+    createLayers();
+    viewport.addChild(muralContainer);
+}
 
-    if (backgroundSprite)
-        muralContainer.addChild(backgroundSprite);
-    if (frameSprite)
-        muralContainer.addChild(frameSprite);
-    if (layerSprites.length > 0) {
-        layerSprites.forEach(layerSprite => {
-            muralContainer.addChild(layerSprite);
-        });
+function updateImageSize() {
+    const imageRatio = backgroundTexture.width / backgroundTexture.height;
+    if (imageRatio > screenWidth / screenHeight) {
+        imageWidth = screenHeight * imageRatio;
+    } else {
+        imageHeight = screenWidth / imageRatio;
     }
 
-    muralContainer.eventMode = 'static';
-    muralContainer.cursor = 'pointer';
-    muralContainer.on('pointerdown', onDragStart, muralContainer);
-    adjustImageContainerSize();
-    centerImageContainer();
-}
-
-function adjustImageContainerSize() {
-    muralContainer.width = imageWidth;
-    muralContainer.height = imageHeight;
-}
-
-function centerImageContainer() {
-    muralContainer.x = (screenWidth - imageWidth) / 2;
-}
-
-function createMapBackground()
-{
-    mapSprite = new Sprite(mapTexture);
-    mapSprite.label = 'background';
-    mapSprite.eventMode = 'static';
-    mapSprite.cursor = 'pointer';
-    mapSprite.anchor.set(0.5, 0.5);
-    setMapSpritePosition();
-}
-
-function createFirstCity()
-{
-    firstCitySprite = new Sprite(firstCityTexture);
-    firstCitySprite.label = 'firstCity';
-    firstCitySprite.eventMode = 'static';
-    firstCitySprite.cursor = 'pointer';
-    firstCitySprite.anchor.set(0.5, 0.5);
-    firstCitySprite.on('pointerdown', toggleMualVisibility, firstCitySprite);
-
-    setFirstCitySpritePosition();
-}
-
-function toggleMualVisibility() {
-    if(muralVisible) {
-        muralContainer.visible = false;
-        muralVisible = false;
-    }
-    else {
-        muralContainer.visible = true;
-        muralVisible = true;
+    if(bgGraphics) {
+        bgGraphics.width = imageWidth;
+        bgGraphics.height = imageHeight;
     }
 }
 
-function setFirstCitySpritePosition()
-{
-    if(!firstCitySprite) return;
-
-    firstCitySprite.x = app.screen.width / 2;
-    firstCitySprite.y = app.screen.height / 2;
-}
-
-function createSecondCity()
-{
-    secondCitySprite = new Sprite(secondCityTexture);
-    secondCitySprite.label = 'secondCity';
-    secondCitySprite.eventMode = 'static';
-    secondCitySprite.cursor = 'pointer';
-    secondCitySprite.anchor.set(0.5, 0.5);
-    setSecondCitySpritePosition();
-}
-
-function setSecondCitySpritePosition()
-{
-    if(!secondCitySprite) return;
-
-    secondCitySprite.x = app.screen.width / 2;
-    secondCitySprite.y = app.screen.height / 2;
-}
-
-function setMapSpritePosition()
-{
-    if(!mapSprite) return;
-
-    mapSprite.x = app.screen.width / 2;
-    mapSprite.y = app.screen.height / 2;
-}
-
-function createBackground()
+function createMuralBackground()
 {
     const bgContext = new GraphicsContext()
-        .rect(0, 0, backgroundTexture.width, backgroundTexture.height)
+        .rect(-backgroundTexture.width/2, 0, backgroundTexture.width, backgroundTexture.height)
         .texture(backgroundTexture, 0xffffff, -backgroundTexture.width / 2, -backgroundTexture.height / 2)
-    const bgGraphics = new Graphics(bgContext);
-    bgGraphics.scale.set(2, 1.5);
-    bgGraphics.x = app.screen.width / 2 + backgroundTexture.width / 2;
-    bgGraphics.y = app.screen.height / 2;
-    app.stage.addChild(bgGraphics);
-}
-
-function createFrame()
-{
-    frameSprite = new Sprite(frameTexture);
-    frameSprite.label = 'frame';
-    frameSprite.eventMode = 'static';
-    frameSprite.cursor = 'pointer';
-    frameSprite.anchor.set(0.5, 0.5);
-    setFrameSpritePosition();
-}
-
-function setFrameSpritePosition() 
-{
-    if(!frameSprite) return;
-
-    frameSprite.x = app.screen.width / 2;
-    frameSprite.y = app.screen.height / 2;
+    bgGraphics = new Graphics(bgContext);
+    bgGraphics.scale.set(globalXScale, globalYScale);
+    bgGraphics.x = viewport.worldWidth / 2;
+    bgGraphics.y = viewport.center.y;
+    bgGraphics.interactive = true;
+    bgGraphics.buttonMode = true;
+    // bgGraphics.cursor = 'pointer';
+    bgGraphics.eventMode = 'static';
+    bgGraphics.hitArea = new Rectangle(-backgroundTexture.width / 2, -backgroundTexture.height / 2, backgroundTexture.width, backgroundTexture.height);
+    viewport.addChild(bgGraphics);
 }
 
 function createLayers() {
     for (let i = 0; i < layersCount; i++) {
-        let points = []
-        shapes[i].points.forEach(point => {
-            for (let j = 0; j < point.length; j+=2) {
-                points.push(point[j] - layerTextures[i].width / 2);
-                points.push(point[j + 1] - layerTextures[i].height / 2);
-            }
-        });
         const layerContext = new GraphicsContext()
-            .poly(points)
-            .fill('red')
             .texture(layerTextures[i], 0xffffff, -layerTextures[i].width / 2, -layerTextures[i].height / 2)
-        const layerGraphics = new Graphics(layerContext);
-        layerGraphics.scale.set(2, 1.5);
-        layerGraphics.interactive = true;
-        layerGraphics.cursor = 'pointer';
-        layerGraphics.on('pointerover', () => {
-            layerGraphics.visible = false;
-        });
-        layerGraphics.x = app.screen.width + layerTextures[i].width / 2;
-        layerGraphics.y = app.screen.height / 2;
-        app.stage.addChild(layerGraphics);
-        // const layerSprite = new Sprite(layerTextures[i]);
-        // layerSprite.label = 'layer ' + (i + 1);
-        // layerSprite.anchor.set(0.5, 0.5);
-        // layerSprite.x = app.screen.width / 2;
-        // layerSprite.y = app.screen.height / 2;
-        // layerSprite.interactive = false;
-        // layerSprites.push(layerSprite);
+        const layerGfx = new Graphics(layerContext);
+        layerGfx.zIndex = i;
+        layerGraphics.push(layerGfx);
+        bgGraphics.addChild(layerGfx);
+        create_layer_collider(i);
     }
 }
 
-function highlightLayer(layerIndex) {
-    layerSprites[layerIndex].texture = layersHoverTextures[layerIndex];
+function highlightLayer(i) {
+    layerGraphics[i].clear();
+    const layerContext = new GraphicsContext()
+        .texture(layersHoverTextures[i], 0xffffff, -layerTextures[i].width / 2, -layerTextures[i].height / 2)
+    layerGraphics[i] = new Graphics(layerContext);
+    layerGraphics[i].zIndex = i;
+    bgGraphics.addChild(layerGraphics[i]);
 }
 
-function unhighlightLayer(layerIndex) {
-    layerSprites[layerIndex].texture = layerTextures[layerIndex];
+function unhighlightLayer(i) {
+    layerGraphics[i].clear();
+    const layerContext = new GraphicsContext()
+        .texture(layerTextures[i], 0xffffff, -layerTextures[i].width / 2, -layerTextures[i].height / 2)        
+    layerGraphics[i] = new Graphics(layerContext);
+    layerGraphics[i].zIndex = i;
+    bgGraphics.addChild(layerGraphics[i]);
 }
 
-function createLayerShapes() {
-    shapes.forEach((shapeData, index) => {
-        if(index >= layerSprites.length) return;
+function create_layer_collider(i) {
+    let points = []
 
-        const shape = CombinedShape.parse(shapeData.points, 1, layerSprites[index]);
-        let shapeGfx = new Graphics().poly(shape.shape[0].points).fill(0xea00ff);
-        shapeGfx.alpha = 0.2;
-        // if (shapeData.position) {
-        //     shapeGfx.x = shapeData.position.x;
-        //     shapeGfx.y = shapeData.position.y;
-        // }
-        // if(shapeData.scale) {
-        //     shapeGfx.scale.set(shapeData.scale);
-        // }
-        shapeGfx.x = -410;
-        shapeGfx.y = -20;
-        shapeGfx.scale.set(2);
-        if (layerSprites[index]) {
-            muralContainer.addChild(shapeGfx);
-            layerSprites[index].texture.shape = shape;
-            shapeGfx.interactive = true;
-            shapeGfx.hitArea = shape.shape[0];
-        }
-
-        shapeGfx.on('pointerover', () => {
-            shapeGfx.alpha = 0.1;
-            highlightLayer(index);
+    if(shapes[i] !== undefined) {
+        shapes[i].points.forEach(point => {
+            for (let j = 0; j < point.length; j+=2) {
+                points.push(point[j] - backgroundTexture.width / 2);
+                points.push(point[j + 1] - backgroundTexture.height / 2);
+            }
         });
-        shapeGfx.on('pointerout', () => {
-            shapeGfx.alpha = 0.2;
-            unhighlightLayer(index);
-        });
+    }
 
-        shapesgfx.push(shapeGfx);
-        // imageContainer.addChild(shapeGfx);
+    const layerContext = new GraphicsContext()
+        .poly(points)
+        .fill('red')
+
+    const layerGfx = new Graphics(layerContext);
+    layerGfx.alpha = 0;
+    layerGfx.zIndex = i * layersCount;
+
+    let isInteracting = false;
+    if(layersHoverTextures[i].label.includes('Hover')) {
+        isInteracting = true;
+        layerGfx.alpha = 0;
+    }
+
+    layerGfx.interactive = isInteracting;
+    layerGfx.cursor = 'pointer';
+    layerGfx.hitArea = new Polygon(points);
+    layerGfx.on('pointerover', () => {
+        console.log('pointerover');
+        highlightLayer(i);
     });
+    layerGfx.on('pointerout', () => {
+        unhighlightLayer(i);
+    });
+    bgGraphics.addChild(layerGfx);
 }
 
 app.stage.eventMode = 'static';
 app.stage.hitArea = app.screen;
-app.stage.on('pointerup', onDragEnd);
-app.stage.on('pointerupoutside', onDragEnd);
-app.stage.addEventListener('pointermove', (e) =>
-{
-});
 
-function onDragMove(event)
-{
-    if (dragTarget)
-    {
-        let leftBound = Math.min(-scrollLimit/2, dragTarget.x + event.data.originalEvent.movementX);
-        let rightBound = Math.max(scrollLimit/2, dragTarget.x + event.data.originalEvent.movementX);
-        if(dragTarget.x + event.data.originalEvent.movementX > leftBound && dragTarget.x + event.data.originalEvent.movementX < rightBound)
-        {
-            dragTarget.x += event.data.originalEvent.movementX * scrollSpeed;
-        }
-    }
-}
-
-function onDragStart()
-{
-    dragTarget = this;
-    console.log(dragTarget);
-    app.stage.on('pointermove', onDragMove);
-}
-
-function onDragEnd()
-{
-    if (dragTarget)
-    {
-        app.stage.off('pointermove', onDragMove);
-        dragTarget.alpha = 1;
-        dragTarget = null;
-    }
-}
-
-window.addEventListener('resize', () =>
-{
-    // initViewport();
-    // setBackgroundSpritePosition();
-    // setFrameSpritePosition();
-    // setScrollLimit();
-    // adjustSpriteSize();
-    // centerImageContainer();
-    // adjustImageContainerSize();
-});
-
-app.ticker.add((time) =>
-{
-
+app.ticker.add((time) => {
+    // console.log(app.screen);
 });
