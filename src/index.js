@@ -1,9 +1,12 @@
-import { Application, Assets, Container, Graphics, GraphicsContext, Rectangle, Polygon } from 'pixi.js';
+import { Application, Assets, Graphics, GraphicsContext, Rectangle, Polygon } from 'pixi.js';
 import { Viewport } from 'pixi-viewport'
 import { SliderView } from "@masatomakino/pixijs-basic-scrollbar";
 
+const SCREENWIDTH = 1280;
+const SCREENHEIGHT = 720;
+
 const app = new Application();
-await app.init({ background: '#1099bb', resizeTo: window });
+await app.init({ background: '#1099bb', width: SCREENWIDTH, height: SCREENHEIGHT });
 document.body.appendChild(app.canvas);
 
 const layersCount = 25;
@@ -15,7 +18,6 @@ let layerTextures = [];
 let layersHoverTextures = [];
 let bgGraphics;
 let layerGraphics = [];
-let mapContainer, muralContainer;
 let screenWidth,
     screenHeight,
     imageWidth,
@@ -55,20 +57,16 @@ async function importTextures() {
 }
 
 function init() {
-    const imageRatio = backgroundTexture.width / backgroundTexture.height;
-    if (imageRatio > screenWidth / screenHeight) {0
-        imageWidth = screenHeight * imageRatio;
-    } else {
-        imageHeight = screenWidth / imageRatio;
-    }
+    imageWidth = backgroundTexture.width;
+    imageHeight = backgroundTexture.height;
 
-    const worldWidth = imageWidth * globalXScale;
-    const worldHeight = imageHeight * globalYScale;
+    const WORLD_WIDTH = imageWidth * globalXScale;
+    const WORLD_HEIGHT = imageHeight * globalYScale;
     viewport = new Viewport({
-        screenWidth: window.innerWidth,
-        screenHeight: window.innerHeight,
-        worldWidth: worldWidth,
-        worldHeight: worldHeight,
+        screenWidth: SCREENWIDTH,
+        screenHeight: SCREENHEIGHT,
+        worldWidth: WORLD_WIDTH,
+        worldHeight: WORLD_HEIGHT,
         events: app.renderer.events
     })
     viewport.drag({ 
@@ -82,30 +80,11 @@ function init() {
         minScale: 1,
         maxScale: 1,
     });
-    viewport.moveCenter(-180, app.screen.height / 2);
-    // viewport.on('drag-end', function() {
-    //     if(this.getVisibleBounds().x > 0 || this.getVisibleBounds().y > 0) {
-    //         this.ensureVisible(0,0);
-    //     }
-    // });
-    // viewport.clamp({
-    // //     direction: 'all',
-    //     left: -1140,
-    //     right: 1140,
-    // })
-    // viewport.bounce({
-    //     sides: 'horizontal',
-    //     friction: 0,
-    //     time: 1,
-    // });
-    const line = new Graphics().rect(0, 0, worldWidth, worldHeight).fill('white');
-    viewport.addChild(line);
+    viewport.clamp({ left: -264, right: 1550, underflow: 'none' });
     app.stage.addChild(viewport)
 
-    mapContainer = new Container();
-    muralContainer = new Container();
-    screenWidth = window.innerWidth;
-    screenHeight = window.innerHeight
+    screenWidth = SCREENWIDTH;
+    screenHeight = SCREENHEIGHT
     imageWidth = screenWidth;
     imageHeight = screenHeight;
 }
@@ -133,15 +112,8 @@ function initPoup() {
 }
 
 function createElements() {
-    muralContainer.zIndex = 1;
-    muralContainer.interactive = true;
-    muralContainer.cursor = 'move';
-    // createMapBackground();
-    // createFirstCity();
-    // createSecondCity();
     createMuralBackground();
     createLayers();
-    viewport.addChild(muralContainer);
 }
 
 function updateImageSize() {
@@ -165,7 +137,7 @@ function createMuralBackground()
         .texture(backgroundTexture, 0xffffff, -backgroundTexture.width / 2, -backgroundTexture.height / 2)
     bgGraphics = new Graphics(bgContext);
     bgGraphics.scale.set(globalXScale, globalYScale);
-    bgGraphics.x = viewport.worldWidth / 2;
+    bgGraphics.x = viewport.center.x;
     bgGraphics.y = viewport.center.y;
     bgGraphics.interactive = true;
     bgGraphics.buttonMode = true;
@@ -235,7 +207,6 @@ function create_layer_collider(i) {
     layerGfx.cursor = 'pointer';
     layerGfx.hitArea = new Polygon(points);
     layerGfx.on('pointerover', () => {
-        console.log('pointerover');
         highlightLayer(i);
     });
     layerGfx.on('pointerout', () => {
@@ -248,5 +219,5 @@ app.stage.eventMode = 'static';
 app.stage.hitArea = app.screen;
 
 app.ticker.add((time) => {
-    // console.log(app.screen);
+
 });
