@@ -1,5 +1,5 @@
 import { sound } from '@pixi/sound';
-import { Application, Assets, Graphics, GraphicsContext, Rectangle, Polygon, Container, Text, TextStyle } from 'pixi.js';
+import { Application, Assets, Graphics, GraphicsContext, Rectangle, Polygon, Container, Text, TextStyle, Point, HTMLText  } from 'pixi.js';
 import { Viewport } from 'pixi-viewport'
 import { SliderView, ScrollBarView, ScrollBarContents } from "@masatomakino/pixijs-basic-scrollbar";
 import TWEEN from "@tweenjs/tween.js";
@@ -24,44 +24,48 @@ let viewport;
 let backgroundTexture;
 let layerTextures = [];
 let layersHoverTextures = [];
-let bgGraphics;
+let bgGraphics, mapGraphics;
 let layerGraphics = [];
 let screenWidth,
     screenHeight,
     imageWidth,
     imageHeight;
 let shapes = [];
+let mapShape;
 let boxUI, scrollbarUI, scrollbarButtonUI, closeButtonUI;
 let currentPopupScrollbar, currentPopupContainer, popupAudioElement;
+let mapTexture, mapHoverTexture;
+
+let isMuralVisible = true;
 
 const data = [
-    { index: '1', text: '', audio: '', hasText : false, hasAudio : false },
-    { index: '2', text: '', audio: '', hasText : false, hasAudio : false },
-    { index: '3', text: '', audio: '', hasText : true, hasAudio : true },
-    { index: '4', text: '', audio: '', hasText : true, hasAudio : true },
-    { index: '5', text: '', audio: '', hasText : true, hasAudio : false },
-    { index: '6', text: '', audio: '', hasText : true, hasAudio : true },
-    { index: '7', text: '', audio: '', hasText : false, hasAudio : true },
-    { index: '8', text: '', audio: '', hasText : true, hasAudio : true },
-    { index: '9', text: '', audio: '', hasText : true, hasAudio : true },
-    { index: '10', text: '', audio: '', hasText : false, hasAudio : false },
-    { index: '11', text: '', audio: '', hasText : false, hasAudio : false },
-    { index: '12', text: '', audio: '', hasText : false, hasAudio : true },
-    { index: '13', text: '', audio: '', hasText : true, hasAudio : false },
-    { index: '14', text: '', audio: '', hasText : true, hasAudio : true },
-    { index: '15', text: '', audio: '', hasText : true, hasAudio : false },
-    { index: '16', text: '', audio: '', hasText : false, hasAudio : true },
-    { index: '17', text: '', audio: '', hasText : false, hasAudio : false },
-    { index: '18', text: '', audio: '', hasText : true, hasAudio : false },
-    { index: '19', text: '', audio: '', hasText : true, hasAudio : false },
-    { index: '20', text: '', audio: '', hasText : false, hasAudio : false },
-    { index: '21', text: '', audio: '', hasText : true, hasAudio : false },
-    { index: '22', text: '', audio: '', hasText : false, hasAudio : false },
-    { index: '23', text: '', audio: '', hasText : false, hasAudio : false },
-    { index: '24', text: '', audio: '', hasText : true, hasAudio : false },
-    { index: '25', text: '', audio: '', hasText : false, hasAudio : false },
-    { index: '26', text: '', audio: '', hasText : true, hasAudio : true },
-    { index: '27', text: '', audio: '', hasText : true, hasAudio : true },
+    { index: 1, text: '', audio: '', hasText : false, hasAudio : false },
+    { index: 2, text: '', audio: '', hasText : false, hasAudio : false },
+    { index: 3, text: '', audio: '', hasText : true, hasAudio : true },
+    { index: 4, text: '', audio: '', hasText : true, hasAudio : true },
+    { index: 5, text: '', audio: '', hasText : true, hasAudio : false },
+    { index: 6, text: '', audio: '', hasText : true, hasAudio : true },
+    { index: 7, text: '', audio: '', hasText : false, hasAudio : true },
+    { index: 8, text: '', audio: '', hasText : true, hasAudio : true },
+    { index: 9, text: '', audio: '', hasText : true, hasAudio : true },
+    { index: 10, text: '', audio: '', hasText : false, hasAudio : false },
+    { index: 11, text: '', audio: '', hasText : false, hasAudio : false },
+    { index: 12, text: '', audio: '', hasText : false, hasAudio : true },
+    { index: 13, text: '', audio: '', hasText : true, hasAudio : false },
+    { index: 14, text: '', audio: '', hasText : true, hasAudio : true },
+    { index: 15, text: '', audio: '', hasText : true, hasAudio : false },
+    { index: 16, text: '', audio: '', hasText : false, hasAudio : true },
+    { index: 17, text: '', audio: '', hasText : false, hasAudio : false },
+    { index: 18, text: '', audio: '', hasText : true, hasAudio : false },
+    { index: 19, text: '', audio: '', hasText : true, hasAudio : false },
+    { index: 20, text: '', audio: '', hasText : false, hasAudio : false },
+    { index: 21, text: '', audio: '', hasText : true, hasAudio : false },
+    { index: 22, text: '', audio: '', hasText : false, hasAudio : false },
+    { index: 23, text: '', audio: '', hasText : false, hasAudio : false },
+    { index: 24, text: '', audio: '', hasText : true, hasAudio : false },
+    { index: 25, text: '', audio: '', hasText : false, hasAudio : false },
+    { index: 26, text: '', audio: '', hasText : true, hasAudio : true },
+    { index: 27, text: '', audio: '', hasText : true, hasAudio : true },
 ]
 
 
@@ -80,7 +84,7 @@ initLayerData().then(() => {
 
 async function initLayerData() {
     await Assets.load('./assets/fonts/LibreFranklin-Regular.ttf');
-    for (let i = 0; i < layersCount; i++) {
+    for (let i = 0; i <= layersCount; i++) {
         if(data[i].hasText === true) {   
             try {
                 await fetch(`./assets/texts/${i + 1}.txt`)
@@ -111,9 +115,17 @@ async function initLayerData() {
             }
         }
     }
+
+    console.log(data);
 }
 
 async function loadLayerShapesJson() {
+    await fetch(`./assets/shapes/map_shape.json`)
+    .then(response => response.json())
+    .then(data => {
+        mapShape = data.shapes[0];
+    });
+
     await fetch(`./assets/shapes/shapes.json`)
     .then(response => response.json())
     .then(data => {
@@ -124,6 +136,8 @@ async function loadLayerShapesJson() {
 }
 
 async function importTextures() {
+    mapTexture = await Assets.load('./assets/textures/map/map.png');
+    mapHoverTexture = await Assets.load('./assets/textures/map/map-hover.png');
     backgroundTexture = await Assets.load('./assets/textures/background.png');
     for (let i = 2; i <= 27; i++) {
         layerTextures.push(await Assets.load(`./assets/textures/frames/${i}.png`));
@@ -194,7 +208,7 @@ function initPoup() {
     app.stage.addChild(slider);
 }
 
-const initScrollBar = (stage, view, index, x = 32, y = 150) => {
+const initScrollBar = (stage, view, layerData, x = 32, y = 150) => {
     const container = new Container();
     currentPopupContainer = container;
     container.x = x;
@@ -220,28 +234,30 @@ const initScrollBar = (stage, view, index, x = 32, y = 150) => {
     container.addChild(closeButtongfx);
 
     container.addChild(boxUIgfx);
-    const contents = getScrollBarOption(CONTENTS_W, SCROLLBAR_H, container, index);
-    const scrollbar = new ScrollBarView(
-      {
-        base: getScrollBarBase(SCROLLBAR_W, SCROLLBAR_H, 0x0000ff),
-        button: getScrollBarButton(SCROLLBAR_W, 0xffff00),
-        minPosition: 0,
-        maxPosition: SCROLLBAR_H,
-        rate: 0.0,
-        isHorizontal: false,
-        canvas: view,
-      },
-      contents,
-    );
-    currentPopupScrollbar = scrollbar;
-  
-    stage.addChild(scrollbar);
-    scrollbar.x = container.x + CONTENTS_W;
-    scrollbar.y = y;
-  
-    scrollbar.sliderEventEmitter.on("slider_change", (e) => {
-      // console.log(e);
-    });
+    if(layerData.hasText) {
+        const contents = getScrollBarOption(CONTENTS_W, SCROLLBAR_H, container, layerData);
+        const scrollbar = new ScrollBarView(
+        {
+            base: getScrollBarBase(SCROLLBAR_W, SCROLLBAR_H, 0x0000ff),
+            button: getScrollBarButton(SCROLLBAR_W, 0xffff00),
+            minPosition: 0,
+            maxPosition: SCROLLBAR_H,
+            rate: 0.0,
+            isHorizontal: false,
+            canvas: view,
+        },
+        contents,
+        );
+        currentPopupScrollbar = scrollbar;
+    
+        stage.addChild(scrollbar);
+        scrollbar.x = container.x + CONTENTS_W;
+        scrollbar.y = y;
+    
+        scrollbar.sliderEventEmitter.on("slider_change", (e) => {
+        // console.log(e);
+        });
+    }
 
     // const config = {
     //     progress: {
@@ -270,18 +286,18 @@ const initScrollBar = (stage, view, index, x = 32, y = 150) => {
     // sound.play('my-sound');
     
     // container.addChild(audioProgressBar)
-    popupAudioElement = document.querySelector('audio');
-    popupAudioElement.style.position = 'absolute';
-    popupAudioElement.style.top = container.y - (SCROLLBAR_H * 0.2) + 'px';
-    popupAudioElement.style.left = container.x + (CONTENTS_W * 0.04) + 'px';
-    popupAudioElement.style.zIndex = '1000';
-    popupAudioElement.src = data[index].audio;
-    popupAudioElement.style.display = 'block';
-    popupAudioElement.style.width = CONTENTS_W + 'px';
-    popupAudioElement.style.opacity = 0.7;
-    popupAudioElement.controls = true;
-
-    return scrollbar;
+    if(layerData.hasAudio) {
+        popupAudioElement = document.querySelector('audio');
+        popupAudioElement.style.position = 'absolute';
+        popupAudioElement.style.top = container.y - (SCROLLBAR_H * 0.2) + 'px';
+        popupAudioElement.style.left = container.x + (CONTENTS_W * 0.04) + 'px';
+        popupAudioElement.style.zIndex = '1000';
+        popupAudioElement.src = layerData.audio;
+        popupAudioElement.style.display = 'block';
+        popupAudioElement.style.width = CONTENTS_W + 'px';
+        popupAudioElement.style.opacity = 0.7;
+        popupAudioElement.controls = true;
+    }
   };
   
 const getScrollBarBase = (w, h, color) => {
@@ -303,42 +319,39 @@ const getScrollBarButton = (width, color) => {
     return g;
 };
   
-const getScrollBarContents = (w, h, container, index, isMask, fillStyle) => {
+const getScrollBarContents = (w, h, container, layerData, isMask, fillStyle) => {
     const g = new Graphics();
     g.rect(0, 0, w, h).fill(fillStyle);
 
-    if(!isMask && index !== -1) {
-        const textStyle = new TextStyle({
-            fontFamily: 'LibreFranklin',
-            fontSize: 18,
-            fill: 0x231F20,
-            wordWrap: true,
-            wordWrapWidth: w,
-            padding: 200,
-        });
-
-        const text = new Text({
-            text: data[index].text,
-            style: textStyle,
+    if(!isMask) {
+        const text = new HTMLText({
+            text: layerData.text,
+            style: {
+                fontFamily: 'LibreFranklin',
+                fontSize: 18,
+                wordWrap: true,
+                wordWrapWidth: w,
+                align: 'left',
+                padding: 10,
+            },
           })
         text.x = 0;
         text.y = 0;
         text.zIndex = 1000
         text.width = w;
+        text.roundPixels = true
         g.addChild(text);
     }
- 
-
     g.boundsArea = new Rectangle(0, 0, w, h);
     container.addChild(g);
     return g;
 };
   
-const getScrollBarOption = (contentsW, scrollBarH, container, index) => {
-    const targetContents = getScrollBarContents(contentsW, scrollBarH * 4, container, index, false, { 
+const getScrollBarOption = (contentsW, scrollBarH, container, layerData) => {
+    const targetContents = getScrollBarContents(contentsW, scrollBarH * 4, container, layerData, false, { 
         color: 0xCECAAE, 
     });
-    const contentsMask = getScrollBarContents(contentsW, scrollBarH, container, -1, true, {
+    const contentsMask = getScrollBarContents(contentsW, scrollBarH, container, null, true, {
         color: 0x0000ff,
         alpha: 0.3,
     });
@@ -346,8 +359,11 @@ const getScrollBarOption = (contentsW, scrollBarH, container, index) => {
 };
 
 function createElements() {
+    createMap();
     createMuralBackground();
     createLayers();
+
+    toggleMuralVisibility();
 }
 
 function updateImageSize() {
@@ -364,6 +380,88 @@ function updateImageSize() {
     }
 }
 
+function createMap() {
+    mapGraphics = new Graphics()
+        .texture(mapTexture, 0xffffff, 0, 0, mapTexture.width, mapTexture.height)
+    mapGraphics.zIndex = 900;
+    mapGraphics.scale.set(0.8);
+    mapGraphics.x = 0;
+    mapGraphics.y = viewport.center.y - window.innerHeight / 2 - 75;
+    
+    viewport.addChild(mapGraphics);
+    create_map_collider();
+}
+
+function create_map_collider() {
+    let points = []
+
+    if(mapShape !== undefined) {
+        mapShape.points.forEach(point => {
+            for (let j = 0; j < point.length; j+=2) {
+                points.push(point[j]);
+                points.push(point[j + 1]);
+            }
+        });
+    }
+
+    const layerContext = new GraphicsContext()
+        .poly(points)
+        .fill('red')
+
+    const layerGfx = new Graphics(layerContext);
+    layerGfx.alpha = 0;
+    layerGfx.zIndex = 901;
+    layerGfx.interactive = true;
+    layerGfx.cursor = 'pointer';
+    layerGfx.hitArea = new Polygon(points);
+    layerGfx.on('pointerover', () => {
+        highlightMap();
+    });
+    layerGfx.on('pointerout', () => {
+        unhighlightMap();
+    });
+    layerGfx.on('pointerdown', (e) => {
+        toggleMuralVisibility();
+    });
+    mapGraphics.addChild(layerGfx);
+}
+
+function highlightMap() {
+    mapGraphics.clear();
+    const layerContext = new GraphicsContext()
+        .texture(mapHoverTexture, 0xffffff, 0, 0, mapTexture.width, mapTexture.height)
+    mapGraphics = new Graphics(layerContext);
+    mapGraphics.zIndex = 900;
+    mapGraphics.scale.set(0.8);
+    mapGraphics.x = 0;
+    mapGraphics.y = viewport.center.y - window.innerHeight / 2 - 75;
+    viewport.addChild(mapGraphics);
+}
+
+function unhighlightMap() {
+    mapGraphics.clear();
+    const layerContext = new GraphicsContext()
+        .texture(mapTexture, 0xffffff, 0, 0, mapTexture.width, mapTexture.height)
+    mapGraphics = new Graphics(layerContext);
+    mapGraphics.zIndex = 900;
+    mapGraphics.scale.set(0.8);
+    mapGraphics.x = 0;
+    mapGraphics.y = viewport.center.y - window.innerHeight / 2 - 75;
+    viewport.addChild(mapGraphics);
+}
+
+function toggleMuralVisibility() {
+    if(isMuralVisible) {
+        bgGraphics.visible = false;
+        isMuralVisible = false;
+        mapGraphics.visible = true;
+    } else {
+        bgGraphics.visible = true;
+        isMuralVisible = true;
+        mapGraphics.visible = false;
+    }
+}
+
 function createMuralBackground()
 {
     const bgContext = new GraphicsContext()
@@ -373,12 +471,17 @@ function createMuralBackground()
     bgGraphics.scale.set(globalXScale, globalYScale);
     bgGraphics.x = viewport.center.x;
     bgGraphics.y = viewport.center.y;
+    bgGraphics.zIndex = 950;
     bgGraphics.interactive = true;
     bgGraphics.buttonMode = true;
     // bgGraphics.cursor = 'pointer';
     bgGraphics.eventMode = 'static';
     bgGraphics.hitArea = new Rectangle(-backgroundTexture.width / 2, -backgroundTexture.height / 2, backgroundTexture.width, backgroundTexture.height);
     viewport.addChild(bgGraphics);
+
+    // bgGraphics.on('pointerdown', (e) => {
+    //     closePopup();
+    // });
 }
 
 function createLayers() {
@@ -447,37 +550,73 @@ function create_layer_collider(i) {
         unhighlightLayer(i);
     });
     layerGfx.on('pointerdown', (e) => {
+        const layerIndex = i + 2;
+        console.log('layer clicked', layerIndex);
         closePopup();
 
-        const x = e.global.x;
-        const y = e.global.y;
+        // const x = e.global.x;
+        // const y = e.global.y;
         const popupWidth = CONTENTS_W;
         const popupHeight = SCROLLBAR_H;
 
-        let newX = x;
-        let newY = y;
+        // let newX = x;
+        // let newY = y;
 
-        if(x + popupWidth > screenWidth) {
-            newX = x - popupWidth;
+        // if(x + popupWidth > screenWidth) {
+        //     newX = x - popupWidth;
+        // }
+
+        // if(y + popupHeight > screenHeight) {
+        //     newY = y - popupHeight;
+        // }
+
+        // calculate the centroid of the polygon to place the popup
+        let centroidX = 0;
+        let centroidY = 0;
+        for(let j = 0; j < points.length; j+=2) {
+            centroidX += points[j];
+            centroidY += points[j + 1];
+        }
+        centroidX /= points.length / 2;
+        centroidY /= points.length / 2;
+
+        let newX = layerGfx.toGlobal(new Point(centroidX, centroidY)).x;
+        let newY = layerGfx.toGlobal(new Point(centroidX, centroidY)).y;
+
+        if(newX + popupWidth > screenWidth) {
+            newX = screenWidth - popupWidth * 1.2;
         }
 
-        if(y + popupHeight > screenHeight) {
-            newY = y - popupHeight;
+        if(newY + popupHeight > screenHeight) {
+            newY = screenHeight - popupHeight * 1.2;
         }
 
-        initScrollBar(app.stage, app.canvas, i + 1, newX, newY);
+        let layerData = findData(layerIndex);
+        console.log(layerData);
+        if(layerData.hasText || layerData.hasAudio) {
+            initScrollBar(app.stage, app.canvas, layerData, newX, newY);
+            viewport.pause = true;
+
+        }
     });
     bgGraphics.addChild(layerGfx);
 }
 
 function closePopup() {
-    if(currentPopupScrollbar) {
-        app.stage.removeChild(currentPopupScrollbar);
-        app.stage.removeChild(currentPopupContainer);
+    viewport.pause = false;
+    app.stage.removeChild(currentPopupContainer);
+    if(popupAudioElement) {
         popupAudioElement.style.display = 'none';
         popupAudioElement.pause();
+    }
+    if(currentPopupScrollbar) {
+        app.stage.removeChild(currentPopupScrollbar);
         currentPopupScrollbar.destroy();
     }
+}
+
+function findData(index) {
+    return data.find((item) => item.index === index);
 }
 
 app.stage.eventMode = 'static';
