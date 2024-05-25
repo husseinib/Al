@@ -64,10 +64,11 @@ const data = [
     { index: 23, text: '', audio: '', hasText : false, hasAudio : false },
     { index: 24, text: '', audio: '', hasText : true, hasAudio : false },
     { index: 25, text: '', audio: '', hasText : false, hasAudio : false },
-    { index: 26, text: '', audio: '', hasText : true, hasAudio : true },
+    { index: 26, text: '', audio: '', hasText : true, hasAudio : false },
     { index: 27, text: '', audio: '', hasText : true, hasAudio : true },
 ]
 
+const description = { index: -1, text: '', audio: '', hasText : true, hasAudio : false };
 
 initLayerData().then(() => {
     importTextures()
@@ -84,6 +85,21 @@ initLayerData().then(() => {
 
 async function initLayerData() {
     await Assets.load('./assets/fonts/LibreFranklin-Regular.ttf');
+
+    try {
+        await fetch(`./assets/texts/description.txt`)
+        .then(response => response.text())
+        .then(text => {
+            if(text !== undefined && text.startsWith('<!DOCTYPE html>')) {
+                description.text = '';
+            } else {
+                description.text = text;
+            }
+        });
+    } catch (error) {
+        description.text = '';
+    }
+
     for (let i = 0; i <= layersCount; i++) {
         if(data[i].hasText === true) {   
             try {
@@ -115,8 +131,6 @@ async function initLayerData() {
             }
         }
     }
-
-    console.log(data);
 }
 
 async function loadLayerShapesJson() {
@@ -184,6 +198,8 @@ function init() {
     screenHeight = SCREENHEIGHT
     imageWidth = screenWidth;
     imageHeight = screenHeight;
+
+    viewport.plugins.pause('drag')
 }
 
 function initPoup() {
@@ -208,7 +224,7 @@ function initPoup() {
     app.stage.addChild(slider);
 }
 
-const initScrollBar = (stage, view, layerData, x = 32, y = 150) => {
+const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton = false) => {
     const container = new Container();
     currentPopupContainer = container;
     container.x = x;
@@ -232,6 +248,36 @@ const initScrollBar = (stage, view, layerData, x = 32, y = 150) => {
         closePopup();
     });
     container.addChild(closeButtongfx);
+
+    if(hasMuralButton === true) {
+        const muralButton = new Graphics().rect(0, 0, 128, 32).fill(0x837D5A);
+        muralButton.zIndex = 1100;
+        muralButton.x = CONTENTS_W / 2 - (128/2);
+        muralButton.y = -SCROLLBAR_H * 0.2;
+        muralButton.interactive = true;
+        muralButton.buttonMode = true;
+        muralButton.cursor = 'pointer';
+        muralButton.hitArea = new Rectangle(0, 0, 128, 32);
+        muralButton.on('pointerdown', () => {
+            closePopup();
+            toggleMuralVisibility();
+        });
+        container.addChild(muralButton);
+
+        const muralText = new Text('View Mural', new TextStyle({
+            fontFamily: 'LibreFranklin',
+            fontSize: 18,
+            fontWeight: 'bold',
+            fill: 0x000000,
+            align: 'center',
+            padding: 10,
+        }));
+        muralText.roundPixels = true
+        muralText.zIndex = 1101;
+        muralText.x = 128/2 - muralText.width/2;
+        muralText.y = 32/2 - muralText.height/2;
+        muralButton.addChild(muralText);
+    }
 
     container.addChild(boxUIgfx);
     if(layerData.hasText) {
@@ -384,9 +430,9 @@ function createMap() {
     mapGraphics = new Graphics()
         .texture(mapTexture, 0xffffff, 0, 0, mapTexture.width, mapTexture.height)
     mapGraphics.zIndex = 900;
-    mapGraphics.scale.set(0.8);
+    mapGraphics.scale.set(0.8, 0.75);
     mapGraphics.x = 0;
-    mapGraphics.y = viewport.center.y - window.innerHeight / 2 - 75;
+    mapGraphics.y = viewport.center.y - window.innerHeight / 2;
     
     viewport.addChild(mapGraphics);
     create_map_collider();
@@ -418,10 +464,15 @@ function create_map_collider() {
         highlightMap();
     });
     layerGfx.on('pointerout', () => {
+        // closePopup();
         unhighlightMap();
     });
     layerGfx.on('pointerdown', (e) => {
-        toggleMuralVisibility();
+        const popupWidth = CONTENTS_W;
+        const popupHeight = SCROLLBAR_H;
+        let centroid = getCentroid(points);
+        initScrollBar(app.stage, app.canvas, description, layerGfx.toGlobal(centroid).x - popupWidth * 1.5, layerGfx.toGlobal(centroid).y - popupHeight/2, true);
+        // toggleMuralVisibility();
     });
     mapGraphics.addChild(layerGfx);
 }
@@ -432,9 +483,9 @@ function highlightMap() {
         .texture(mapHoverTexture, 0xffffff, 0, 0, mapTexture.width, mapTexture.height)
     mapGraphics = new Graphics(layerContext);
     mapGraphics.zIndex = 900;
-    mapGraphics.scale.set(0.8);
+    mapGraphics.scale.set(0.8, 0.75);
     mapGraphics.x = 0;
-    mapGraphics.y = viewport.center.y - window.innerHeight / 2 - 75;
+    mapGraphics.y = viewport.center.y - window.innerHeight / 2;
     viewport.addChild(mapGraphics);
 }
 
@@ -444,9 +495,9 @@ function unhighlightMap() {
         .texture(mapTexture, 0xffffff, 0, 0, mapTexture.width, mapTexture.height)
     mapGraphics = new Graphics(layerContext);
     mapGraphics.zIndex = 900;
-    mapGraphics.scale.set(0.8);
+    mapGraphics.scale.set(0.8, 0.75);
     mapGraphics.x = 0;
-    mapGraphics.y = viewport.center.y - window.innerHeight / 2 - 75;
+    mapGraphics.y = viewport.center.y - window.innerHeight / 2;
     viewport.addChild(mapGraphics);
 }
 
@@ -455,10 +506,12 @@ function toggleMuralVisibility() {
         bgGraphics.visible = false;
         isMuralVisible = false;
         mapGraphics.visible = true;
+        viewport.plugins.pause('drag')
     } else {
         bgGraphics.visible = true;
         isMuralVisible = true;
         mapGraphics.visible = false;
+        viewport.plugins.resume('drag')
     }
 }
 
@@ -571,17 +624,9 @@ function create_layer_collider(i) {
         // }
 
         // calculate the centroid of the polygon to place the popup
-        let centroidX = 0;
-        let centroidY = 0;
-        for(let j = 0; j < points.length; j+=2) {
-            centroidX += points[j];
-            centroidY += points[j + 1];
-        }
-        centroidX /= points.length / 2;
-        centroidY /= points.length / 2;
-
-        let newX = layerGfx.toGlobal(new Point(centroidX, centroidY)).x;
-        let newY = layerGfx.toGlobal(new Point(centroidX, centroidY)).y;
+        let centroid = getCentroid(points);
+        let newX = layerGfx.toGlobal(centroid).x;
+        let newY = layerGfx.toGlobal(centroid).y;
 
         if(newX + popupWidth > screenWidth) {
             newX = screenWidth - popupWidth * 1.2;
@@ -600,6 +645,19 @@ function create_layer_collider(i) {
         }
     });
     bgGraphics.addChild(layerGfx);
+}
+
+function getCentroid(points) {
+    let centroidX = 0;
+    let centroidY = 0;
+    for(let j = 0; j < points.length; j+=2) {
+        centroidX += points[j];
+        centroidY += points[j + 1];
+    }
+    centroidX /= points.length / 2;
+    centroidY /= points.length / 2;
+
+    return new Point(centroidX, centroidY);
 }
 
 function closePopup() {
