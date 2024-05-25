@@ -1,0 +1,61 @@
+{
+	"generator_info": "PixiJS polygon exporter. Visit https://github.com/eXponenta for more!",
+	"tag": "pixi_polygon_points",
+	"format": {
+		"reshaped": false,
+		"flat": true,
+		"body": false,
+		"normalized": false
+	},
+	"shapes": [
+		{
+			"label": "",
+			"id": 0,
+			"type": "POLYGON",
+			"source": {
+				"width": 1920,
+				"height": 1080
+			},
+			"points": [
+				[
+					727,
+					408,
+					518,
+					503,
+					560,
+					628,
+					828,
+					725,
+					1096,
+					912,
+					1289,
+					924,
+					1366,
+					835,
+					1462,
+					847,
+					1501,
+					829,
+					1364,
+					571,
+					1207,
+					423,
+					1288,
+					270,
+					1093,
+					124,
+					944,
+					86,
+					775,
+					190
+				]
+			],
+			"bounds": {
+				"x": 518,
+				"y": 190,
+				"width": 983,
+				"height": 1311
+			}
+		}
+	]
+}
