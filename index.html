@@ -2,10 +2,32 @@
 <html>
 <head>
     <title>Mural</title>
-<script defer src="main.js?b29f340c3242a3971645"></script></head>
+    <style>
+        audio::-webkit-media-controls-play-button,
+        audio::-webkit-media-controls-panel {
+            background-color: #CECAAE;
+            color: #837D5A;
+        }
+
+        canvas {
+            display: block; /* fix necessary to remove space at bottom of canvas */
+            /* remove any white area around the canvas */
+            margin: 0;
+            padding: 0;
+            border: 0;
+            outline: 0;
+        }
+
+        #screen-size {
+            width: 99%;
+            height: 10%;
+        }
+    </style>
+<script defer src="main.js?dd43b264d9fbef30c681"></script></head>
 <body>
     <audio controls id="audioplayer" style="display: none; width: 300px;"></audio>
         <source src="" type="audio/mpeg">
     </audio>
+    <div id="screen-size"></div>
 </body>
 </html>
