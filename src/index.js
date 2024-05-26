@@ -1,24 +1,42 @@
 import { sound } from '@pixi/sound';
-import { Application, Assets, Graphics, GraphicsContext, Rectangle, Polygon, Container, Text, TextStyle, Point, HTMLText  } from 'pixi.js';
+import { Application, Assets, Graphics, GraphicsContext, Rectangle, Polygon, Container, Text, TextStyle, Point, HTMLText,Ticker } from 'pixi.js';
 import { Viewport } from 'pixi-viewport'
 import { SliderView, ScrollBarView, ScrollBarContents } from "@masatomakino/pixijs-basic-scrollbar";
+import { SliderViewUtil } from "@masatomakino/pixijs-basic-scrollbar";
+import { ScrollBarViewUtil } from "@masatomakino/pixijs-basic-scrollbar";
 import TWEEN from "@tweenjs/tween.js";
 import AssetsProgressBar from './AssetsProgressBar.js'
 
-const SCREENWIDTH = 1280;
-const SCREENHEIGHT = 720;
+const SCREENWIDTH = window.innerWidth;
+const SCREENHEIGHT = window.innerHeight;
+let isMobile = isMobileAndTablet() || isMobileCheck();
+console.log('isMobile:', isMobile);
+
+function isMobileAndTablet() {
+    let check = false;
+    (function(a){if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino|android|ipad|playbook|silk/i.test(a)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0,4))) check = true;})(navigator.userAgent||navigator.vendor||window.opera);
+    return check;
+};
+
+function isMobileCheck() {
+    if ((typeof window.orientation !== "undefined") || ( navigator.userAgent.indexOf('IEMobile') !== -1 ))
+        return true;
+    return false;
+}
 
 const app = new Application();
-await app.init({ background: '#1099bb', width: SCREENWIDTH, height: SCREENHEIGHT });
+await app.init({ background: '#AA9458', width: SCREENWIDTH, height: SCREENHEIGHT, resizeTo: window });
 document.body.appendChild(app.canvas);
 
 const layersCount = 25;
 const globalXScale = 1;
 const globalYScale = 1;
 
-const SCROLLBAR_W = 16;
-const SCROLLBAR_H = 360;
-const CONTENTS_W = 360;
+let SCROLLBAR_W = 16;
+let SCROLLBAR_H = 360;
+let CONTENTS_W = 360;
+
+let textFontSize = 18;
 
 let viewport;
 let backgroundTexture;
@@ -35,10 +53,14 @@ let mapShape;
 let boxUI, scrollbarUI, scrollbarButtonUI, closeButtonUI;
 let currentPopupScrollbar, currentPopupContainer, popupAudioElement;
 let mapTexture, mapHoverTexture;
+let closeMuralButtongfx;
 
 let lastMousePosition = null;
 let isMuralVisible = true;
 let isMouseOverLayer = false;
+let isDraggingPopup = false;
+
+let viewPortCenter = { x: 0, y: 0 };
 
 const data = [
     { index: 1, text: '', audio: '', hasText : false, hasAudio : false },
@@ -178,8 +200,10 @@ function init() {
     viewport.clampZoom({
         minScale: 1,
         maxScale: 1,
-    });
-    viewport.clamp({ left: -264, right: 1550, underflow: 'none' });
+    });   
+    let widths = calculateImageWidths();
+    viewport.clamp({ left: -((SCREENWIDTH/2) * widths), right: ((SCREENWIDTH/2) * widths) + (SCREENWIDTH/2) * 2, underflow: 'none' });
+    viewPortCenter = { x: viewport.center.x, y: viewport.center.y };
     app.stage.addChild(viewport)
 
     screenWidth = SCREENWIDTH;
@@ -190,57 +214,50 @@ function init() {
     viewport.plugins.pause('drag')
 }
 
-function initPoup() {
-    const baseBgContext = new GraphicsContext()
-        .rect(0, 0, 320, 50)
-        .fill(0x000000, 0.5)
-    let baseBgGraphics = new Graphics(baseBgContext);
-    const slider = new SliderView({
-        base: baseBgGraphics,
-        // bar: new Graphics(...),
-        base: baseBgGraphics,
-        // mask: new Graphics(...),
-        minPosition: 0,
-        maxPosition: 320, //slider width
-        rate: 0.0,
-        canvas : app.canvas,
-    });
-    
-    slider.on("slider_change", e => {
-        // console.log(e.rate);
-    });
-    app.stage.addChild(slider);
+function calculateImageWidths() {
+    const imageRatio = backgroundTexture.width / backgroundTexture.height;
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    let imageWidth = screenHeight * imageRatio;
+    let imageWidths = imageWidth / screenWidth;
+    return imageWidths - 1;
 }
 
-const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton = false) => {
+const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton = false, pageSize) => {
     const container = new Container();
     currentPopupContainer = container;
     container.x = x;
     container.y = y;
 
+    let popupTopPadding = 0.3;
+    if(isMobile) {
+        popupTopPadding = 0.15;
+    }
+
     let boxXPosition = -CONTENTS_W * 0.05;
-    let boxYPosition = -SCROLLBAR_H * 0.3;
-    let boxWidth = CONTENTS_W + CONTENTS_W * 0.15;
+    let boxYPosition = -SCROLLBAR_H * popupTopPadding;
+    let boxWidth = CONTENTS_W + CONTENTS_W * 0.11;
     let boxHeight = SCROLLBAR_H + SCROLLBAR_H * 0.4;
-    let closeButtonY = -SCROLLBAR_H * 0.3;
+    let closeButtonY = -SCROLLBAR_H * popupTopPadding * 0.93;
 
     const audioOnly = layerData.hasAudio == true && layerData.hasText == false;
     const textOnly = layerData.hasAudio == false && layerData.hasText == true;
-    const textAndAudio = layerData.hasAudio == true && layerData.hasText == true;
 
     if(hasMuralButton == false) {
         if(audioOnly) {
             boxXPosition = -CONTENTS_W * 0.05;
-            boxYPosition = -SCROLLBAR_H * 0.3;
-            boxWidth = CONTENTS_W + CONTENTS_W * 0.15;
+            boxYPosition = -SCROLLBAR_H * popupTopPadding;
+            boxWidth = CONTENTS_W + CONTENTS_W * 0.11;
             boxHeight = SCROLLBAR_H * 0.3;
-            closeButtonY = -SCROLLBAR_H * 0.3;
+            closeButtonY = -SCROLLBAR_H * popupTopPadding * 0.92;
         } else if(textOnly) {
+            let paddingScale = 0.8;
+
             boxXPosition = -CONTENTS_W * 0.05;
-            boxYPosition = -SCROLLBAR_H * 0.1;
-            boxWidth = CONTENTS_W + CONTENTS_W * 0.15;
-            boxHeight = SCROLLBAR_H + SCROLLBAR_H * 0.2;
-            closeButtonY = -SCROLLBAR_H * 0.1;
+            boxYPosition = -SCROLLBAR_H * popupTopPadding * paddingScale;
+            boxWidth = CONTENTS_W + CONTENTS_W * 0.11;
+            boxHeight = SCROLLBAR_H + SCROLLBAR_H * 0.3;
+            closeButtonY = -SCROLLBAR_H * popupTopPadding * 0.85;
         }
     }
 
@@ -252,7 +269,7 @@ const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton =
 
     const closeButtongfx = new Graphics().texture(closeButtonUI, 0xffffff, 0, 0, 32, 32);
     closeButtongfx.zIndex = 1000;
-    closeButtongfx.x = CONTENTS_W;
+    closeButtongfx.x = CONTENTS_W * (isMobile ? 0.88 : 0.8)
     closeButtongfx.y = closeButtonY;
     closeButtongfx.interactive = true;
     closeButtongfx.buttonMode = true;
@@ -261,13 +278,14 @@ const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton =
     closeButtongfx.on('pointerdown', () => {
         closePopup();
     });
+    isMobile ? closeButtongfx.scale.set(5) : closeButtongfx.scale.set(3);
     container.addChild(closeButtongfx);
 
     if(hasMuralButton === true) {
         const muralButton = new Graphics().rect(0, 0, 128, 32).fill(0x837D5A);
         muralButton.zIndex = 1100;
-        muralButton.x = CONTENTS_W / 2 - (128/2);
-        muralButton.y = -SCROLLBAR_H * 0.2;
+        muralButton.x = CONTENTS_W / 2 * (isMobile ? 0.3 : 0.5);
+        muralButton.y = -SCROLLBAR_H * (isMobile ? 0.1 : 0.2);
         muralButton.interactive = true;
         muralButton.buttonMode = true;
         muralButton.cursor = 'pointer';
@@ -280,7 +298,7 @@ const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton =
 
         const muralText = new Text('View Mural', new TextStyle({
             fontFamily: 'LibreFranklin',
-            fontSize: 18,
+            fontSize: textFontSize,
             fontWeight: 'bold',
             fill: 0x000000,
             align: 'center',
@@ -290,12 +308,17 @@ const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton =
         muralText.zIndex = 1101;
         muralText.x = 128/2 - muralText.width/2;
         muralText.y = 32/2 - muralText.height/2;
+
+        isMobile ? muralButton.scale.set(2) : muralButton.scale.set(1);
         muralButton.addChild(muralText);
     }
 
     container.addChild(boxUIgfx);
+    if(audioOnly) {
+        container.y = y + SCROLLBAR_H * 0.5;
+    }
     if(layerData.hasText) {
-        const contents = getScrollBarOption(CONTENTS_W, SCROLLBAR_H, container, layerData);
+        const contents = getScrollBarOption(CONTENTS_W, SCROLLBAR_H, container, layerData, pageSize);
         const scrollbar = new ScrollBarView(
         {
             base: getScrollBarBase(SCROLLBAR_W, SCROLLBAR_H, 0x0000ff),
@@ -319,33 +342,6 @@ const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton =
         });
     }
 
-    // const config = {
-    //     progress: {
-    //         bar: {
-    //             backgroundColor: '#4cd137',
-    //             border: 4,
-    //             borderColor: '#FFFFFF',
-    //             fillColor: '#e55039',
-    //             height: 30,
-    //             radius: 25,
-    //             width: CONTENTS_W,
-    //         },
-    //         text: {
-    //             visible: true,
-    //             fill: 0xffffff,
-    //             fontSize: 30,
-    //         }
-    //     }
-    // }
-    // const audioProgressBar = new AssetsProgressBar(config);
-    // audioProgressBar.position.set(CONTENTS_W/2, -16)
-    // audioProgressBar.zIndex = 1000;
-    // audioProgressBar.setProgress(0)
-
-    // sound.add('my-sound', './assets/audio/sample.mp3');
-    // sound.play('my-sound');
-    
-    // container.addChild(audioProgressBar)
     if(layerData.hasAudio) {
         if(layerData.audio !== '') {
             setAudio(layerData.audio, container);
@@ -367,14 +363,19 @@ const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton =
 };
 
 function setAudio(url, container) {
+    let audioTopPadding = 0.2;
+    if(isMobile) {
+        audioTopPadding = 0.05;
+    }
+
     popupAudioElement = document.querySelector('audio');
     popupAudioElement.style.position = 'absolute';
-    popupAudioElement.style.top = container.y - (SCROLLBAR_H * 0.2) + 'px';
-    popupAudioElement.style.left = container.x + (CONTENTS_W * 0.04) + 'px';
+    popupAudioElement.style.top = container.y - (SCROLLBAR_H * audioTopPadding) + 'px';
+    popupAudioElement.style.left = container.x + (CONTENTS_W * 0.05) + 'px';
     popupAudioElement.style.zIndex = '1000';
     popupAudioElement.src = url;
     popupAudioElement.style.display = 'block';
-    popupAudioElement.style.width = CONTENTS_W + 'px';
+    popupAudioElement.style.width = CONTENTS_W * 0.8 + 'px';
     popupAudioElement.style.opacity = 0.7;
     popupAudioElement.controls = true;
 }
@@ -399,19 +400,18 @@ const getScrollBarButton = (width, color) => {
 };
   
 const getScrollBarContents = (w, h, container, layerData, isMask, fillStyle) => {
-    const g = new Graphics();
-    g.rect(0, 0, w, h).fill(fillStyle);
-
+    let text = null;
+    let pages = 1;
     if(!isMask) {
-        const text = new HTMLText({
+        text = new HTMLText({
             text: layerData.text,
             style: {
                 fontFamily: 'LibreFranklin',
-                fontSize: 18,
+                textFontSize: 18,
                 wordWrap: true,
                 wordWrapWidth: w,
                 align: 'left',
-                padding: 10,
+                padding: 20,
             },
           })
         text.x = 0;
@@ -419,15 +419,64 @@ const getScrollBarContents = (w, h, container, layerData, isMask, fillStyle) => 
         text.zIndex = 1000
         text.width = w;
         text.roundPixels = true
+        let textHeight = text.height;
+        pages = Math.ceil(textHeight / h);
+    }
+    h = h * pages;
+
+    const g = new Graphics();
+    g.rect(0, 0, w, h).fill(fillStyle);
+    g.boundsArea = new Rectangle(0, 0, w, h);
+    if(text != null) {
         g.addChild(text);
     }
-    g.boundsArea = new Rectangle(0, 0, w, h);
+
+    // add on mouse wheel event
+    g.interactive = true;
+    let delta = 16;
+    g.on('wheel', (e) => {
+        const shift = e.deltaY > 0 ? -delta : delta;
+        scroll(shift);
+    });
+
+    g.on('pointerdown', (e) => {
+        console.log('pointerdown');
+        isDraggingPopup = true;
+        currentPopupScrollbar.inertialManager.onMouseDown(e);
+    });
+    g.on('pointermove', (e) => {
+        console.log('pointermove');
+        if(isDraggingPopup) {
+            currentPopupScrollbar.inertialManager.onMouseMove(e);
+        }
+    });
+    g.on('pointerup', (e) => {
+        console.log('pointerup');
+        isDraggingPopup = false;
+        currentPopupScrollbar.inertialManager.onMouseUp(e);
+    });
+    g.on('pointerupoutside', (e) => {
+        console.log('pointerupoutside');
+        isDraggingPopup = false;
+        currentPopupScrollbar.inertialManager.onMouseUp(e);
+    });
+
     container.addChild(g);
     return g;
 };
+
+function scroll(delta) {
+    const target = currentPopupScrollbar.contents.target;
+    const mask = currentPopupScrollbar.contents.mask;
+    const isHorizontal = currentPopupScrollbar.isHorizontal;
+    const pos = SliderViewUtil.getPosition(target, isHorizontal) + delta;
+    ScrollBarViewUtil.clampTargetPosition(target, mask, pos, isHorizontal);
+    currentPopupScrollbar.wheelManager.emit("update_target_position");
+    currentPopupScrollbar.scrollBarEventEmitter.emit("stop_inertial_tween");
+}
   
-const getScrollBarOption = (contentsW, scrollBarH, container, layerData) => {
-    const targetContents = getScrollBarContents(contentsW, scrollBarH * 4, container, layerData, false, { 
+const getScrollBarOption = (contentsW, scrollBarH, container, layerData, pageSize = 1) => {
+    const targetContents = getScrollBarContents(contentsW, scrollBarH, container, layerData, false, { 
         color: 0xCECAAE, 
     });
     const contentsMask = getScrollBarContents(contentsW, scrollBarH, container, null, true, {
@@ -441,7 +490,7 @@ function createElements() {
     createMap();
     createMuralBackground();
     createLayers();
-
+    createCloseMuralButton();
     toggleMuralVisibility();
 }
 
@@ -459,12 +508,28 @@ function updateImageSize() {
     }
 }
 
+function createCloseMuralButton() {
+    closeMuralButtongfx = new Graphics().texture(closeButtonUI, 0xffffff, 0, 0, 32, 32);
+    closeMuralButtongfx.zIndex = 99999999;
+    closeMuralButtongfx.x = window.innerWidth * 0.95;
+    closeMuralButtongfx.y = -window.innerHeight * 0.98;
+    closeMuralButtongfx.interactive = true;
+    closeMuralButtongfx.buttonMode = true;
+    closeMuralButtongfx.cursor = 'pointer';
+    closeMuralButtongfx.hitArea = new Rectangle(0, 0, 32, 32);
+    closeMuralButtongfx.on('pointerdown', () => {
+        toggleMuralVisibility();
+    });
+    isMobile ? closeMuralButtongfx.scale.set(5) : closeMuralButtongfx.scale.set(3);
+    viewport.addChild(closeMuralButtongfx);
+}
+
 function createMap() {
     mapGraphics = new Graphics()
-        .texture(mapTexture, 0xffffff, 0, 0, mapTexture.width, mapTexture.height)
+        .texture(mapTexture, 0xffffff, 0, 0, SCREENWIDTH, SCREENHEIGHT);
     mapGraphics.zIndex = 900;
-    mapGraphics.scale.set(0.8, 0.75);
-    mapGraphics.x = 0;
+    // mapGraphics.scale.set(0.8, 0.75);
+    mapGraphics.x = viewport.center.x - SCREENWIDTH / 2;
     mapGraphics.y = viewport.center.y - SCREENHEIGHT / 2;
     
     viewport.addChild(mapGraphics);
@@ -501,10 +566,25 @@ function create_map_collider() {
         unhighlightMap();
     });
     layerGfx.on('pointerdown', (e) => {
+        if(isMobile) {
+            CONTENTS_W = window.innerWidth * 0.8;
+            SCROLLBAR_H = window.innerHeight * 0.6;
+            SCROLLBAR_W = 16 * 2;
+        }
+
         const popupWidth = CONTENTS_W;
         const popupHeight = SCROLLBAR_H;
-        let centroid = getCentroid(points);
-        initScrollBar(app.stage, app.canvas, description, layerGfx.toGlobal(centroid).x - popupWidth * 1.5, layerGfx.toGlobal(centroid).y - popupHeight/2, true);
+        let x = 0;
+        let y = 0;
+        if(isMobile) {
+            x = SCREENWIDTH / 2 - popupWidth / 2;
+            y = SCREENHEIGHT / 2 - popupHeight / 2;
+        } else {
+            let centroid = getCentroid(points);
+            x = layerGfx.toGlobal(centroid).x - popupWidth * 1.5;
+            y = layerGfx.toGlobal(centroid).y - popupHeight/2;
+        }
+        initScrollBar(app.stage, app.canvas, description, x, y, true, 1);
         // toggleMuralVisibility();
     });
     mapGraphics.addChild(layerGfx);
@@ -513,11 +593,11 @@ function create_map_collider() {
 function highlightMap() {
     mapGraphics.clear();
     const layerContext = new GraphicsContext()
-        .texture(mapHoverTexture, 0xffffff, 0, 0, mapTexture.width, mapTexture.height)
+        .texture(mapHoverTexture, 0xffffff, 0, 0, SCREENWIDTH, SCREENHEIGHT)
     mapGraphics = new Graphics(layerContext);
     mapGraphics.zIndex = 900;
-    mapGraphics.scale.set(0.8, 0.75);
-    mapGraphics.x = 0;
+    // mapGraphics.scale.set(0.8, 0.75);
+    mapGraphics.x = viewport.center.x - SCREENWIDTH / 2;
     mapGraphics.y = viewport.center.y - SCREENHEIGHT / 2;
     viewport.addChild(mapGraphics);
 }
@@ -525,25 +605,29 @@ function highlightMap() {
 function unhighlightMap() {
     mapGraphics.clear();
     const layerContext = new GraphicsContext()
-        .texture(mapTexture, 0xffffff, 0, 0, mapTexture.width, mapTexture.height)
+        .texture(mapTexture, 0xffffff, 0, 0, SCREENWIDTH, SCREENHEIGHT)
     mapGraphics = new Graphics(layerContext);
     mapGraphics.zIndex = 900;
-    mapGraphics.scale.set(0.8, 0.75);
-    mapGraphics.x = 0;
+    // mapGraphics.scale.set(0.8, 0.75);
+    mapGraphics.x = viewport.center.x - SCREENWIDTH / 2;
     mapGraphics.y = viewport.center.y - SCREENHEIGHT / 2;
     viewport.addChild(mapGraphics);
 }
 
 function toggleMuralVisibility() {
+    closePopup();
     if(isMuralVisible) {
         bgGraphics.visible = false;
         isMuralVisible = false;
         mapGraphics.visible = true;
         viewport.plugins.pause('drag')
+        closeMuralButtongfx.visible = false;
+        viewport.moveCenter(viewPortCenter.x, viewPortCenter.y);
     } else {
         bgGraphics.visible = true;
         isMuralVisible = true;
         mapGraphics.visible = false;
+        closeMuralButtongfx.visible = true;
         viewport.plugins.resume('drag')
     }
 }
@@ -652,38 +736,37 @@ function create_layer_collider(i) {
         const layerIndex = i + 2;
         closePopup();
 
-        // const x = e.global.x;
-        // const y = e.global.y;
+        if(isMobile) {
+            CONTENTS_W = window.innerWidth * 0.8;
+            SCROLLBAR_H = window.innerHeight * 0.6;
+            SCROLLBAR_W = 16 * 2;
+        }
         const popupWidth = CONTENTS_W;
         const popupHeight = SCROLLBAR_H;
 
-        // let newX = x;
-        // let newY = y;
+        let newX = 0;
+        let newY = 0;
+        if(isMobile) {
+            newX = SCREENWIDTH / 2 - popupWidth / 2;
+            newY = SCREENHEIGHT / 2 - popupHeight / 2;
+        } else {
+            let centroid = getCentroid(points);
+            newX = layerGfx.toGlobal(centroid).x;
+            newY = layerGfx.toGlobal(centroid).y + 64;
+            
+            if(newX + popupWidth > screenWidth) {
+                newX = screenWidth - popupWidth * 1.2;
+            }
 
-        // if(x + popupWidth > screenWidth) {
-        //     newX = x - popupWidth;
-        // }
-
-        // if(y + popupHeight > screenHeight) {
-        //     newY = y - popupHeight;
-        // }
-
-        // calculate the centroid of the polygon to place the popup
-        let centroid = getCentroid(points);
-        let newX = layerGfx.toGlobal(centroid).x;
-        let newY = layerGfx.toGlobal(centroid).y + 64;
-
-        if(newX + popupWidth > screenWidth) {
-            newX = screenWidth - popupWidth * 1.2;
+            if(newY + popupHeight > screenHeight) {
+                newY = screenHeight - popupHeight * 1.2;
+            }
         }
 
-        if(newY + popupHeight > screenHeight) {
-            newY = screenHeight - popupHeight * 1.2;
-        }
 
         let layerData = findData(layerIndex);
         if(layerData.hasText || layerData.hasAudio) {
-            initScrollBar(app.stage, app.canvas, layerData, newX, newY);
+            initScrollBar(app.stage, app.canvas, layerData, newX, newY, false, 4);
             viewport.pause = true;
         }
     });
@@ -724,5 +807,12 @@ app.stage.eventMode = 'static';
 app.stage.hitArea = app.screen;
 
 app.ticker.add((time) => {
+    if(closeMuralButtongfx) {
+        closeMuralButtongfx.x = viewport.center.x + window.innerWidth * 0.45;
+        closeMuralButtongfx.y = viewport.center.y - window.innerHeight * 0.48;
+    }
+});
+
+Ticker.shared.add((e) => {
     TWEEN.update(performance.now());
 });
