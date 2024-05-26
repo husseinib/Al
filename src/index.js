@@ -10,6 +10,7 @@ import AssetsProgressBar from './AssetsProgressBar.js'
 const SCREENWIDTH = window.innerWidth;
 const SCREENHEIGHT = window.innerHeight;
 let isMobile = isMobileAndTablet() || isMobileCheck();
+console.log(isMobile);
 
 function isMobileAndTablet() {
     let check = false;
@@ -23,8 +24,9 @@ function isMobileCheck() {
     return false;
 }
 
+const screenSizeDiv = document.getElementById('screen-size');
 const app = new Application();
-await app.init({ background: '#AA9458', width: SCREENWIDTH, height: SCREENHEIGHT, resizeTo: window });
+await app.init({ background: '#AA9458', width: SCREENWIDTH, height: SCREENHEIGHT, resizeTo: screenSizeDiv });
 document.body.appendChild(app.canvas);
 
 const layersCount = 25;
@@ -517,11 +519,18 @@ function createCloseMuralButton() {
 }
 
 function createMap() {
+    let mapWidth = SCREENWIDTH;
+    let mapHeight = SCREENHEIGHT;
+    if(isMobile) {
+        mapWidth = mapTexture.width;
+        mapHeight = mapTexture.height;
+    }
+
     mapGraphics = new Graphics()
-        .texture(mapTexture, 0xffffff, 0, 0, SCREENWIDTH, SCREENHEIGHT);
+        .texture(mapTexture, 0xffffff, 0, 0, mapWidth, SCREENHEIGHT);
     mapGraphics.zIndex = 900;
     // mapGraphics.scale.set(0.8, 0.75);
-    mapGraphics.x = viewport.center.x - SCREENWIDTH / 2;
+    mapGraphics.x = viewport.center.x - (isMobile ? SCREENWIDTH : SCREENWIDTH / 2)
     mapGraphics.y = viewport.center.y - SCREENHEIGHT / 2;
     
     viewport.addChild(mapGraphics);
@@ -550,6 +559,8 @@ function create_map_collider() {
     layerGfx.interactive = true;
     layerGfx.cursor = 'pointer';
     layerGfx.hitArea = new Polygon(points);
+    // layerGfx.x = viewport.center.x - (isMobile ? SCREENWIDTH : SCREENWIDTH / 2)
+    // layerGfx.y = viewport.center.y - SCREENHEIGHT / 2;
     layerGfx.on('pointerover', () => {
         highlightMap();
     });
@@ -583,25 +594,39 @@ function create_map_collider() {
 }
 
 function highlightMap() {
+    let mapWidth = SCREENWIDTH;
+    let mapHeight = SCREENHEIGHT;
+    if(isMobile) {
+        mapWidth = mapTexture.width;
+        mapHeight = mapTexture.height;
+    }
+
     mapGraphics.clear();
     const layerContext = new GraphicsContext()
-        .texture(mapHoverTexture, 0xffffff, 0, 0, SCREENWIDTH, SCREENHEIGHT)
+        .texture(mapHoverTexture, 0xffffff, 0, 0, mapWidth, SCREENHEIGHT)
     mapGraphics = new Graphics(layerContext);
     mapGraphics.zIndex = 900;
     // mapGraphics.scale.set(0.8, 0.75);
-    mapGraphics.x = viewport.center.x - SCREENWIDTH / 2;
+    mapGraphics.x = viewport.center.x - (isMobile ? SCREENWIDTH : SCREENWIDTH / 2)
     mapGraphics.y = viewport.center.y - SCREENHEIGHT / 2;
     viewport.addChild(mapGraphics);
 }
 
 function unhighlightMap() {
+    let mapWidth = SCREENWIDTH;
+    let mapHeight = SCREENHEIGHT;
+    if(isMobile) {
+        mapWidth = mapTexture.width;
+        mapHeight = mapTexture.height;
+    }
+
     mapGraphics.clear();
     const layerContext = new GraphicsContext()
-        .texture(mapTexture, 0xffffff, 0, 0, SCREENWIDTH, SCREENHEIGHT)
+        .texture(mapTexture, 0xffffff, 0, 0, mapWidth, SCREENHEIGHT)
     mapGraphics = new Graphics(layerContext);
     mapGraphics.zIndex = 900;
     // mapGraphics.scale.set(0.8, 0.75);
-    mapGraphics.x = viewport.center.x - SCREENWIDTH / 2;
+    mapGraphics.x = viewport.center.x - (isMobile ? SCREENWIDTH : SCREENWIDTH / 2)
     mapGraphics.y = viewport.center.y - SCREENHEIGHT / 2;
     viewport.addChild(mapGraphics);
 }
