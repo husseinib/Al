@@ -118,20 +118,6 @@ async function initLayerData() {
                 data[i].text = '';
             }
         }
-
-        if(data[i].hasAudio === true) {
-            try {
-                await fetch(`./assets/audio/${i + 1}.mp3`)
-                .then(response => response.blob())
-                .then(blob => {
-                    const url = URL.createObjectURL(blob);
-                    // sound.add(data[i].audio, url);
-                    data[i].audio = url;
-                });
-            } catch (error) {
-                data[i].audio = '';
-            }
-        }
     }
 }
 
@@ -361,18 +347,37 @@ const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton =
     
     // container.addChild(audioProgressBar)
     if(layerData.hasAudio) {
-        popupAudioElement = document.querySelector('audio');
-        popupAudioElement.style.position = 'absolute';
-        popupAudioElement.style.top = container.y - (SCROLLBAR_H * 0.2) + 'px';
-        popupAudioElement.style.left = container.x + (CONTENTS_W * 0.04) + 'px';
-        popupAudioElement.style.zIndex = '1000';
-        popupAudioElement.src = layerData.audio;
-        popupAudioElement.style.display = 'block';
-        popupAudioElement.style.width = CONTENTS_W + 'px';
-        popupAudioElement.style.opacity = 0.6;
-        popupAudioElement.controls = true;
+        if(layerData.audio !== '') {
+            setAudio(layerData.audio, container);
+        } else {
+            try {
+                fetch(`./assets/audio/${layerData.index}.mp3`)
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    console.log(`Layer ${layerData.index}:`, url);
+                    layerData.audio = url;
+                    setAudio(url, container);
+                });
+            } catch (error) {
+                data[i].audio = '';
+            }
+        }
     }
-  };
+};
+
+function setAudio(url, container) {
+    popupAudioElement = document.querySelector('audio');
+    popupAudioElement.style.position = 'absolute';
+    popupAudioElement.style.top = container.y - (SCROLLBAR_H * 0.2) + 'px';
+    popupAudioElement.style.left = container.x + (CONTENTS_W * 0.04) + 'px';
+    popupAudioElement.style.zIndex = '1000';
+    popupAudioElement.src = url;
+    popupAudioElement.style.display = 'block';
+    popupAudioElement.style.width = CONTENTS_W + 'px';
+    popupAudioElement.style.opacity = 0.7;
+    popupAudioElement.controls = true;
+}
   
 const getScrollBarBase = (w, h, color) => {
     const g = new Graphics();
