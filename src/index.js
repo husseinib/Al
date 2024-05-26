@@ -55,6 +55,8 @@ let boxUI, scrollbarUI, scrollbarButtonUI, closeButtonUI;
 let currentPopupScrollbar, currentPopupContainer, popupAudioElement;
 let mapTexture, mapHoverTexture;
 let closeMuralButtongfx;
+let muralButton, muralText;
+let font;
 
 let lastMousePosition = null;
 let isMuralVisible = true;
@@ -64,65 +66,63 @@ let isDraggingPopup = false;
 let viewPortCenter = { x: 0, y: 0 };
 
 const data = [
-    { index: 1, text: '', audio: '', hasText : false, hasAudio : false },
-    { index: 2, text: '', audio: '', hasText : false, hasAudio : false },
-    { index: 3, text: '', audio: '', hasText : true, hasAudio : true },
-    { index: 4, text: '', audio: '', hasText : true, hasAudio : true },
-    { index: 5, text: '', audio: '', hasText : true, hasAudio : false },
-    { index: 6, text: '', audio: '', hasText : true, hasAudio : true },
-    { index: 7, text: '', audio: '', hasText : false, hasAudio : true },
-    { index: 8, text: '', audio: '', hasText : true, hasAudio : true },
-    { index: 9, text: '', audio: '', hasText : true, hasAudio : true },
-    { index: 10, text: '', audio: '', hasText : false, hasAudio : false },
-    { index: 11, text: '', audio: '', hasText : false, hasAudio : false },
-    { index: 12, text: '', audio: '', hasText : false, hasAudio : true },
-    { index: 13, text: '', audio: '', hasText : true, hasAudio : false },
-    { index: 14, text: '', audio: '', hasText : true, hasAudio : true },
-    { index: 15, text: '', audio: '', hasText : true, hasAudio : false },
-    { index: 16, text: '', audio: '', hasText : false, hasAudio : true },
-    { index: 17, text: '', audio: '', hasText : false, hasAudio : false },
-    { index: 18, text: '', audio: '', hasText : true, hasAudio : false },
-    { index: 19, text: '', audio: '', hasText : true, hasAudio : false },
-    { index: 20, text: '', audio: '', hasText : false, hasAudio : false },
-    { index: 21, text: '', audio: '', hasText : true, hasAudio : false },
-    { index: 22, text: '', audio: '', hasText : false, hasAudio : false },
-    { index: 23, text: '', audio: '', hasText : false, hasAudio : false },
-    { index: 24, text: '', audio: '', hasText : true, hasAudio : false },
-    { index: 25, text: '', audio: '', hasText : false, hasAudio : false },
-    { index: 26, text: '', audio: '', hasText : true, hasAudio : false },
-    { index: 27, text: '', audio: '', hasText : true, hasAudio : true },
+    { index: 1, text: '', audio: '', hasText : false, hasAudio : false, hasHover : true },
+    { index: 2, text: '', audio: '', hasText : false, hasAudio : false, hasHover : false },
+    { index: 3, text: '', audio: '', hasText : true, hasAudio : true, hasHover : true },
+    { index: 4, text: '', audio: '', hasText : true, hasAudio : true, hasHover : true },
+    { index: 5, text: '', audio: '', hasText : true, hasAudio : false, hasHover : true },
+    { index: 6, text: '', audio: '', hasText : true, hasAudio : true, hasHover : true },
+    { index: 7, text: '', audio: '', hasText : false, hasAudio : true, hasHover : true },
+    { index: 8, text: '', audio: '', hasText : true, hasAudio : true, hasHover : true },
+    { index: 9, text: '', audio: '', hasText : true, hasAudio : true, hasHover : true },
+    { index: 10, text: '', audio: '', hasText : false, hasAudio : false, hasHover : false },
+    { index: 11, text: '', audio: '', hasText : false, hasAudio : false, hasHover : false },
+    { index: 12, text: '', audio: '', hasText : false, hasAudio : true, hasHover : true },
+    { index: 13, text: '', audio: '', hasText : true, hasAudio : false, hasHover : true },
+    { index: 14, text: '', audio: '', hasText : true, hasAudio : true, hasHover : true },
+    { index: 15, text: '', audio: '', hasText : true, hasAudio : false, hasHover : true },
+    { index: 16, text: '', audio: '', hasText : false, hasAudio : true, hasHover : true },
+    { index: 17, text: '', audio: '', hasText : false, hasAudio : false, hasHover : true },
+    { index: 18, text: '', audio: '', hasText : true, hasAudio : false, hasHover : true },
+    { index: 19, text: '', audio: '', hasText : true, hasAudio : false, hasHover : true },
+    { index: 20, text: '', audio: '', hasText : false, hasAudio : false, hasHover : false },
+    { index: 21, text: '', audio: '', hasText : true, hasAudio : false, hasHover : true },
+    { index: 22, text: '', audio: '', hasText : false, hasAudio : false, hasHover : false },
+    { index: 23, text: '', audio: '', hasText : false, hasAudio : false, hasHover : false },
+    { index: 24, text: '', audio: '', hasText : true, hasAudio : false, hasHover : true },
+    { index: 25, text: '', audio: '', hasText : false, hasAudio : false, hasHover : false },
+    { index: 26, text: '', audio: '', hasText : true, hasAudio : false, hasHover : true },
+    { index: 27, text: '', audio: '', hasText : true, hasAudio : true, hasHover : false },
 ]
 
 const description = { index: -1, text: '', audio: '', hasText : true, hasAudio : false };
 
-initLayerData().then(() => {
-    importTextures()
-        .then(() => {
-            loadLayerShapesJson().then(() => {
-                init();
-                createElements();
-                updateImageSize();
-            })
-        })
+let canLoadMural = false;
+
+fetchFont().then(() => {
+    importImportantTextures().then(() => {
+        loadMapData().then(() => {
+            init();
+            createMap();
+        }).then(() => {
+            initLayerData().then(() => {
+                loadLayerShapesJson().then(() => {
+                    importTextures().then(() => {
+                        createElements();
+                        updateImageSize();
+                    });
+                });
+            });
+        });
+    });
 });
 
+async function fetchFont() {
+    font = await Assets.load('./assets/fonts/LibreFranklin-Regular.ttf');
+    console.log('Font loaded');
+}
+
 async function initLayerData() {
-    await Assets.load('./assets/fonts/LibreFranklin-Regular.ttf');
-
-    try {
-        await fetch(`./assets/texts/description.txt`)
-        .then(response => response.text())
-        .then(text => {
-            if(text !== undefined && text.startsWith('<!DOCTYPE html>')) {
-                description.text = '';
-            } else {
-                description.text = text;
-            }
-        });
-    } catch (error) {
-        description.text = '';
-    }
-
     for (let i = 0; i <= layersCount; i++) {
         if(data[i].hasText === true) {   
             try {
@@ -139,16 +139,45 @@ async function initLayerData() {
                 data[i].text = '';
             }
         }
+
+        if(data[i].hasAudio) {
+            if(data[i].audio !== '') {
+                setAudio(data[i].audio, container);
+            } else {
+                try {
+                    fetch(`./assets/audio/${data[i].index}.mp3`)
+                    .then(response => response.blob())
+                    .then(blob => {
+                        const url = URL.createObjectURL(blob);
+                        data[i].audio = url;
+                    });
+                } catch (error) {
+                    data[i].audio = '';
+                }
+            }
+        }
     }
 }
 
-async function loadLayerShapesJson() {
+async function loadMapData() {
     await fetch(`./assets/shapes/map_shape.json`)
     .then(response => response.json())
     .then(data => {
         mapShape = data.shapes[0];
     });
 
+    await fetch(`./assets/texts/description.txt`)
+    .then(response => response.text())
+    .then(text => {
+        if(text !== undefined && text.startsWith('<!DOCTYPE html>')) {
+            description.text = '';
+        } else {
+            description.text = text;
+        }
+    });
+}
+
+async function loadLayerShapesJson() {
     await fetch(`./assets/shapes/shapes.json`)
     .then(response => response.json())
     .then(data => {
@@ -158,22 +187,26 @@ async function loadLayerShapesJson() {
     });
 }
 
-async function importTextures() {
+async function importImportantTextures() {
     mapTexture = await Assets.load('./assets/textures/map/map.png');
     mapHoverTexture = await Assets.load('./assets/textures/map/map-hover.png');
     backgroundTexture = await Assets.load('./assets/textures/background.png');
-    for (let i = 2; i <= 27; i++) {
-        layerTextures.push(await Assets.load(`./assets/textures/frames/${i}.png`));
-        try {
-            layersHoverTextures.push(await Assets.load(`./assets/textures/frames/${i}-Hover.png`));
-        } catch (error) {
-            layersHoverTextures.push(await Assets.load(`./assets/textures/frames/${i}.png`));
-        }
-    }
     boxUI = await Assets.load('./assets/UI/Box1.png');
     scrollbarUI = await Assets.load('./assets/UI/ScrollBar.png');
     scrollbarButtonUI = await Assets.load('./assets/UI/ScrollBarButton.png');
     closeButtonUI = await Assets.load('./assets/UI/CloseButton.png');
+}
+
+async function importTextures() {
+    for (let i = 2; i <= 27; i++) {
+        let texture = await Assets.load(`./assets/textures/frames/${i}.png`);
+        layerTextures.push(texture);
+        if(findData(i).hasHover === true) {
+            layersHoverTextures.push(await Assets.load(`./assets/textures/frames/${i}-Hover.png`));
+        } else {
+            layersHoverTextures.push(texture);
+        }
+    }
 }
 
 function init() {
@@ -281,7 +314,7 @@ const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton =
     container.addChild(closeButtongfx);
 
     if(hasMuralButton === true) {
-        const muralButton = new Graphics().rect(0, 0, 128, 32).fill(0x837D5A);
+        muralButton = new Graphics().rect(0, 0, 128, 32).fill(0x837D5A);
         muralButton.zIndex = 1100;
         muralButton.x = CONTENTS_W / 2 * (isMobile ? 0.3 : 0.5);
         muralButton.y = -SCROLLBAR_H * (isMobile ? 0.1 : 0.2);
@@ -290,13 +323,16 @@ const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton =
         muralButton.cursor = 'pointer';
         muralButton.hitArea = new Rectangle(0, 0, 128, 32);
         muralButton.on('pointerdown', () => {
+            if(canLoadMural === false) {
+                return;
+            }
             closePopup();
             toggleMuralVisibility();
         });
         container.addChild(muralButton);
 
-        const muralText = new Text('View Mural', new TextStyle({
-            fontFamily: 'LibreFranklin',
+        muralText = new Text('View Mural', new TextStyle({
+            fontFamily: font.family,
             fontSize: textFontSize,
             fontWeight: 'bold',
             fill: 0x000000,
@@ -341,22 +377,8 @@ const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton =
         });
     }
 
-    if(layerData.hasAudio) {
-        if(layerData.audio !== '') {
-            setAudio(layerData.audio, container);
-        } else {
-            try {
-                fetch(`./assets/audio/${layerData.index}.mp3`)
-                .then(response => response.blob())
-                .then(blob => {
-                    const url = URL.createObjectURL(blob);
-                    layerData.audio = url;
-                    setAudio(url, container);
-                });
-            } catch (error) {
-                data[i].audio = '';
-            }
-        }
+    if(layerData.hasAudio && layerData.audio !== '') {
+        setAudio(layerData.audio, container);
     }
 };
 
@@ -404,7 +426,7 @@ const getScrollBarContents = (w, h, container, layerData, isMask, fillStyle) => 
         text = new HTMLText({
             text: layerData.text,
             style: {
-                fontFamily: 'LibreFranklin',
+                fontFamily: font.family,
                 textFontSize: 18,
                 wordWrap: true,
                 wordWrapWidth: w,
@@ -481,7 +503,6 @@ const getScrollBarOption = (contentsW, scrollBarH, container, layerData, pageSiz
 };
 
 function createElements() {
-    createMap();
     createMuralBackground();
     createLayers();
     createCloseMuralButton();
@@ -500,6 +521,8 @@ function updateImageSize() {
         bgGraphics.width = imageWidth;
         bgGraphics.height = imageHeight;
     }
+
+    canLoadMural = true;
 }
 
 function createCloseMuralButton() {
