@@ -10,7 +10,6 @@ import AssetsProgressBar from './AssetsProgressBar.js'
 const SCREENWIDTH = window.innerWidth;
 const SCREENHEIGHT = window.innerHeight;
 let isMobile = isMobileAndTablet() || isMobileCheck();
-console.log('isMobile:', isMobile);
 
 function isMobileAndTablet() {
     let check = false;
@@ -99,10 +98,8 @@ initLayerData().then(() => {
         .then(() => {
             loadLayerShapesJson().then(() => {
                 init();
-                // initPoup();
                 createElements();
                 updateImageSize();
-                // initScrollBar(app.stage, app.canvas);
             })
         })
 });
@@ -351,7 +348,6 @@ const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton =
                 .then(response => response.blob())
                 .then(blob => {
                     const url = URL.createObjectURL(blob);
-                    console.log(`Layer ${layerData.index}:`, url);
                     layerData.audio = url;
                     setAudio(url, container);
                 });
@@ -440,23 +436,19 @@ const getScrollBarContents = (w, h, container, layerData, isMask, fillStyle) => 
     });
 
     g.on('pointerdown', (e) => {
-        console.log('pointerdown');
         isDraggingPopup = true;
         currentPopupScrollbar.inertialManager.onMouseDown(e);
     });
     g.on('pointermove', (e) => {
-        console.log('pointermove');
         if(isDraggingPopup) {
             currentPopupScrollbar.inertialManager.onMouseMove(e);
         }
     });
     g.on('pointerup', (e) => {
-        console.log('pointerup');
         isDraggingPopup = false;
         currentPopupScrollbar.inertialManager.onMouseUp(e);
     });
     g.on('pointerupoutside', (e) => {
-        console.log('pointerupoutside');
         isDraggingPopup = false;
         currentPopupScrollbar.inertialManager.onMouseUp(e);
     });
@@ -808,8 +800,13 @@ app.stage.hitArea = app.screen;
 
 app.ticker.add((time) => {
     if(closeMuralButtongfx) {
-        closeMuralButtongfx.x = viewport.center.x + window.innerWidth * 0.45;
-        closeMuralButtongfx.y = viewport.center.y - window.innerHeight * 0.48;
+        if(isMobile) {
+            closeMuralButtongfx.x = viewport.center.x + window.innerWidth * 0.3;
+            closeMuralButtongfx.y = viewport.center.y - window.innerHeight * 0.48;
+        } else {
+            closeMuralButtongfx.x = viewport.center.x + window.innerWidth * 0.45;
+            closeMuralButtongfx.y = viewport.center.y - window.innerHeight * 0.48;
+        }
     }
 });
 
