@@ -465,7 +465,7 @@ function createMap() {
     mapGraphics.zIndex = 900;
     mapGraphics.scale.set(0.8, 0.75);
     mapGraphics.x = 0;
-    mapGraphics.y = viewport.center.y - window.innerHeight / 2;
+    mapGraphics.y = viewport.center.y - window.innerHeight / 2 + 64;
     
     viewport.addChild(mapGraphics);
     create_map_collider();
@@ -518,7 +518,7 @@ function highlightMap() {
     mapGraphics.zIndex = 900;
     mapGraphics.scale.set(0.8, 0.75);
     mapGraphics.x = 0;
-    mapGraphics.y = viewport.center.y - window.innerHeight / 2;
+    mapGraphics.y = viewport.center.y - window.innerHeight / 2 + 64;
     viewport.addChild(mapGraphics);
 }
 
@@ -530,7 +530,7 @@ function unhighlightMap() {
     mapGraphics.zIndex = 900;
     mapGraphics.scale.set(0.8, 0.75);
     mapGraphics.x = 0;
-    mapGraphics.y = viewport.center.y - window.innerHeight / 2;
+    mapGraphics.y = viewport.center.y - window.innerHeight / 2 + 64;
     viewport.addChild(mapGraphics);
 }
 
