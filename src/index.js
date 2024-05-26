@@ -9,7 +9,7 @@ const SCREENWIDTH = 1280;
 const SCREENHEIGHT = 720;
 
 const app = new Application();
-await app.init({ background: '#1099bb', width: SCREENWIDTH, height: SCREENHEIGHT, resizeTo: window });
+await app.init({ background: '#1099bb', width: SCREENWIDTH, height: SCREENHEIGHT });
 document.body.appendChild(app.canvas);
 
 const layersCount = 25;
