@@ -36,7 +36,9 @@ let boxUI, scrollbarUI, scrollbarButtonUI, closeButtonUI;
 let currentPopupScrollbar, currentPopupContainer, popupAudioElement;
 let mapTexture, mapHoverTexture;
 
+let lastMousePosition = null;
 let isMuralVisible = true;
+let isMouseOverLayer = false;
 
 const data = [
     { index: 1, text: '', audio: '', hasText : false, hasAudio : false },
@@ -230,7 +232,33 @@ const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton =
     container.x = x;
     container.y = y;
 
-    const boxUIgfx = new Graphics().texture(boxUI, 0xffffff, -CONTENTS_W * 0.05, -SCROLLBAR_H * 0.3, CONTENTS_W + CONTENTS_W * 0.15, SCROLLBAR_H + SCROLLBAR_H * 0.4);
+    let boxXPosition = -CONTENTS_W * 0.05;
+    let boxYPosition = -SCROLLBAR_H * 0.3;
+    let boxWidth = CONTENTS_W + CONTENTS_W * 0.15;
+    let boxHeight = SCROLLBAR_H + SCROLLBAR_H * 0.4;
+    let closeButtonY = -SCROLLBAR_H * 0.3;
+
+    const audioOnly = layerData.hasAudio == true && layerData.hasText == false;
+    const textOnly = layerData.hasAudio == false && layerData.hasText == true;
+    const textAndAudio = layerData.hasAudio == true && layerData.hasText == true;
+
+    if(hasMuralButton == false) {
+        if(audioOnly) {
+            boxXPosition = -CONTENTS_W * 0.05;
+            boxYPosition = -SCROLLBAR_H * 0.3;
+            boxWidth = CONTENTS_W + CONTENTS_W * 0.15;
+            boxHeight = SCROLLBAR_H * 0.3;
+            closeButtonY = -SCROLLBAR_H * 0.3;
+        } else if(textOnly) {
+            boxXPosition = -CONTENTS_W * 0.05;
+            boxYPosition = -SCROLLBAR_H * 0.1;
+            boxWidth = CONTENTS_W + CONTENTS_W * 0.15;
+            boxHeight = SCROLLBAR_H + SCROLLBAR_H * 0.2;
+            closeButtonY = -SCROLLBAR_H * 0.1;
+        }
+    }
+
+    const boxUIgfx = new Graphics().texture(boxUI, 0xffffff, boxXPosition, boxYPosition, boxWidth, boxHeight);
     boxUIgfx.zIndex = 0;
     boxUIgfx.x = 0;
     boxUIgfx.y = 0;
@@ -239,7 +267,7 @@ const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton =
     const closeButtongfx = new Graphics().texture(closeButtonUI, 0xffffff, 0, 0, 32, 32);
     closeButtongfx.zIndex = 1000;
     closeButtongfx.x = CONTENTS_W;
-    closeButtongfx.y = -SCROLLBAR_H * 0.3;
+    closeButtongfx.y = closeButtonY;
     closeButtongfx.interactive = true;
     closeButtongfx.buttonMode = true;
     closeButtongfx.cursor = 'pointer';
@@ -341,7 +369,7 @@ const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton =
         popupAudioElement.src = layerData.audio;
         popupAudioElement.style.display = 'block';
         popupAudioElement.style.width = CONTENTS_W + 'px';
-        popupAudioElement.style.opacity = 0.7;
+        popupAudioElement.style.opacity = 0.6;
         popupAudioElement.controls = true;
     }
   };
@@ -597,14 +625,26 @@ function create_layer_collider(i) {
     layerGfx.cursor = 'pointer';
     layerGfx.hitArea = new Polygon(points);
     layerGfx.on('pointerover', () => {
+        isMouseOverLayer = true;
         highlightLayer(i);
     });
     layerGfx.on('pointerout', () => {
+        isMouseOverLayer = false;
         unhighlightLayer(i);
     });
     layerGfx.on('pointerdown', (e) => {
+        lastMousePosition = new Point(e.global.x, e.global.y);
+    });
+    layerGfx.on('pointerup', (e) => {
+        if(isMouseOverLayer === false) {
+            return;
+        }
+
+        if(lastMousePosition && (lastMousePosition.x !== e.global.x || lastMousePosition.y !== e.global.y)) {
+            return;
+        }
+
         const layerIndex = i + 2;
-        console.log('layer clicked', layerIndex);
         closePopup();
 
         // const x = e.global.x;
@@ -626,7 +666,7 @@ function create_layer_collider(i) {
         // calculate the centroid of the polygon to place the popup
         let centroid = getCentroid(points);
         let newX = layerGfx.toGlobal(centroid).x;
-        let newY = layerGfx.toGlobal(centroid).y;
+        let newY = layerGfx.toGlobal(centroid).y + 64;
 
         if(newX + popupWidth > screenWidth) {
             newX = screenWidth - popupWidth * 1.2;
@@ -637,11 +677,9 @@ function create_layer_collider(i) {
         }
 
         let layerData = findData(layerIndex);
-        console.log(layerData);
         if(layerData.hasText || layerData.hasAudio) {
             initScrollBar(app.stage, app.canvas, layerData, newX, newY);
             viewport.pause = true;
-
         }
     });
     bgGraphics.addChild(layerGfx);
