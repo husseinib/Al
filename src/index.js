@@ -42,8 +42,6 @@ let textFontSize = 16;
 
 let viewport;
 let backgroundTexture;
-let layerTextures = [];
-let layersHoverTextures = [];
 let bgGraphics, mapGraphics;
 let layerGraphics = [];
 let screenWidth,
@@ -106,11 +104,9 @@ fetchFont().then(() => {
             init();
             createMap();
         }).then(() => {
-            initLayerData().then(() => {
-                loadLayerShapesJson().then(() => {
-                    createElements();
-                    updateImageSize();
-                });
+            loadLayerShapesJson().then(() => {
+                createElements();
+                updateImageSize();
             });
         });
     });
@@ -119,27 +115,6 @@ fetchFont().then(() => {
 async function fetchFont() {
     font = await Assets.load('./assets/fonts/LibreFranklin-Regular.ttf');
     console.log('Font loaded');
-}
-
-async function initLayerData() {
-    for (let i = 0; i <= layersCount; i++) {
-        if(data[i].hasAudio) {
-            if(data[i].audio !== '') {
-                setAudio(data[i].audio, container);
-            } else {
-                try {
-                    fetch(`./assets/audio/${data[i].index}.mp3`)
-                    .then(response => response.blob())
-                    .then(blob => {
-                        const url = URL.createObjectURL(blob);
-                        data[i].audio = url;
-                    });
-                } catch (error) {
-                    data[i].audio = '';
-                }
-            }
-        }
-    }
 }
 
 async function loadMapData() {
@@ -348,23 +323,22 @@ const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton =
         });
     }
 
-    if(layerData.hasAudio && layerData.audio !== '') {
-        setAudio(layerData.audio, container);
+    if(layerData.hasAudio) {
+        setAudio(layerData, container);
     }
 };
 
-function setAudio(url, container) {
+function setAudio(layerData, container) {
     let audioTopPadding = 0.2;
     if(isMobile) {
         audioTopPadding = 0.05;
     }
 
-    popupAudioElement = document.querySelector('audio');
+    popupAudioElement = document.getElementById('audio' + layerData.index);
     popupAudioElement.style.position = 'absolute';
     popupAudioElement.style.top = container.y - (SCROLLBAR_H * audioTopPadding) + 'px';
     popupAudioElement.style.left = container.x + (CONTENTS_W * 0.05) + 'px';
     popupAudioElement.style.zIndex = '1000';
-    popupAudioElement.src = url;
     popupAudioElement.style.display = 'block';
     popupAudioElement.style.width = CONTENTS_W * 0.8 + 'px';
     popupAudioElement.style.opacity = 0.7;
