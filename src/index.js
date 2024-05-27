@@ -26,8 +26,9 @@ function isMobileCheck() {
 
 const screenSizeDiv = document.getElementById('screen-size');
 const app = new Application();
-await app.init({ background: '#AA9458', width: SCREENWIDTH, height: SCREENHEIGHT, resizeTo: screenSizeDiv });
+await app.init({ background: '#AA9458', width: SCREENWIDTH, height: SCREENHEIGHT, resizeTo: screenSizeDiv, resolution: window.devicePixelRatio || 1 });
 document.body.appendChild(app.canvas);
+console.log(document.parentElement);
 
 const layersCount = 25;
 const globalXScale = 1;
@@ -861,3 +862,23 @@ app.ticker.add((time) => {
 Ticker.shared.add((e) => {
     TWEEN.update(performance.now());
 });
+
+// on resize event
+// window.addEventListener('resize', resize);
+
+// function resize() {
+//     console.log('Resize');
+//     const scaleFactor = Math.min(
+//       window.innerWidth / app.screen.width,
+//       window.innerHeight / app.screen.height
+//     );
+  
+//     const newWidth = Math.ceil(app.screen.width * scaleFactor);
+//     const newHeight = Math.ceil(app.screen.height * scaleFactor);
+  
+//     console.log('New width: ', app.renderer.view);
+//     app.renderer.view.screen.width = `${newWidth}px`;
+//     app.renderer.view.screen.height = `${newHeight}px`;
+  
+//     app.renderer.resize(newWidth, newHeight);
+//   }
