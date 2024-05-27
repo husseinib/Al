@@ -1,5 +1,5 @@
 import { sound } from '@pixi/sound';
-import { Application, Assets, Graphics, GraphicsContext, Rectangle, Polygon, Container, Text, TextStyle, Point, HTMLText,Ticker } from 'pixi.js';
+import { Application, Assets, Graphics, GraphicsContext, Rectangle, Polygon, Container, Text, TextStyle, Point, HTMLText,Ticker, Texture } from 'pixi.js';
 import { Viewport } from 'pixi-viewport'
 import { SliderView, ScrollBarView, ScrollBarContents } from "@masatomakino/pixijs-basic-scrollbar";
 import { SliderViewUtil } from "@masatomakino/pixijs-basic-scrollbar";
@@ -38,7 +38,7 @@ let SCROLLBAR_W = 16;
 let SCROLLBAR_H = 360;
 let CONTENTS_W = 360;
 
-let textFontSize = 18;
+let textFontSize = 16;
 
 let viewport;
 let backgroundTexture;
@@ -69,30 +69,30 @@ let viewPortCenter = { x: 0, y: 0 };
 const data = [
     { index: 1, text: '', audio: '', hasText : false, hasAudio : false, hasHover : true },
     { index: 2, text: '', audio: '', hasText : false, hasAudio : false, hasHover : false },
-    { index: 3, text: '', audio: '', hasText : true, hasAudio : true, hasHover : true },
-    { index: 4, text: '', audio: '', hasText : true, hasAudio : true, hasHover : true },
-    { index: 5, text: '', audio: '', hasText : true, hasAudio : false, hasHover : true },
-    { index: 6, text: '', audio: '', hasText : true, hasAudio : true, hasHover : true },
+    { index: 3, text: '', audio: '', hasText : true, hasAudio : true, hasHover : true, text: '<strong>The City Mourned their Departure</strong><br><br>“My neighbours migrated to Turkey and informed me that they always fondly recalled us and our good moments. They would even send money to the neighbours and ask them to cook during our religious occasions, expressing their pride in the neighbourhood, the community, and the beliefs present in the city. …I am confident that they wish to return to their cities. Just as birds, no matter how far they migrate, return to their homelands, so do humans." (Voices from Amara)<br><br><strong>Sabian people I know</strong><br><br>“In the 1980s, many people left Baghdad. There was a man named Yahya and his wife, Fariha.<br><br>Yahya was blind, but he could still climb palm trees and trim them. It was a God-given talent.<br><br>He would climb the tree wearing his slippers.” (Voices from Amara)<br><br><strong>The honourable Sabians</strong><br><br>“Although their numbers are unfortunately declining, not as they used to be, they remain a significant and beloved majority in Iraq. They steadfastly adhere to their path of worship and devotion, making them an integral part of the noble community. It\'s impossible to fully comprehend the Sabians using populist concepts; they are a people deserving of respect. We share meals and drinks with them, embrace their customs, and they reciprocate with equal warmth. Any societal stereotypes about them are baseless. In Islam, we refer to them simply as the honourable Sabians. …Historical anecdotes indicate that certain Sabians observe fasting similar to Muslims. When questioned why, they respond it\'s a matter of brotherhood. …Presently, society is advancing and unifying. We once attended their festivities, and now I witness our community enthusiastically participating in their occasions. In their moments of sorrow, we share tea, just as it\'s served at our own gatherings of mourning. This is the essence of true brotherhood.” (Voices from Maysan)' },
+    { index: 4, text: '', audio: '', hasText : true, hasAudio : true, hasHover : true, text: '<strong>Special Rituals</strong><br><br>“They would have separate wedding traditions from Muslims in the town. In Mandaean weddings, they would take the bride in winter or summer and immerse her in a well in the morning before the wedding ceremony, which was a ritual unknown to the Muslims.” (Voices from Amara)<br><br><strong>Wedding Traditions</strong><br><br>“For weddings, many cars would come, and they would call it the Mandi, which was like a forest with trees. They would bring the bride and cover the water well with about seven covers. I saw it with my own eyes. We used to spy on them as they entered the canal, and their Sheikh would marry them.” (Voices from Amara)<br><br><strong><br><br>Present since ancient times</strong><br><br>“This brotherhood, this country, this region, all these matters mean that they need to be practically employed in the subject of dealing with religions, and the Sabians are a key component in Iraq, especially in Maysan province. They have a strong relationship with water and Maysan, this is a well-known historical fact, they have been present since ancient times, practicing their beliefs on the banks of the rivers in Maysan, as well as in Thi Qar and Basra, and in some areas of Iran. This is their historical presence in reality.” (Voices from Maysan)' },
+    { index: 5, text: '', audio: '', hasText : true, hasAudio : false, hasHover : true, text: '<strong>The Sabian homeland</strong><br><br>“The original inhabitants are the Houeiza tribe. The people who lived in Qalat Saleh were from the Sabi’ah tribe, who lived in the Al-Kassarah area between Qalat Saleh and Al-Azair. Qalat Saleh became the nucleus city. The Sabians were craftsmen. The Ottoman government brought them from the Al-Kassarah area to Qalat Saleh and settled them on the left bank of the Tigris River, in an area known as Akouf. This information became known to others, and we call it the Tijara Street or Market Street. There was a river called the Qarma River, which connected between the Tigris River and the Materyil River to the eastern marshes. They lived on the left bank of the Qarma River and the Tigris River in a triangular area because their nature was related to water, and places of worship and rituals had to be connected to water. …Qalat Saleh is the capital of Mandaeism and the evidence is the presence of two monasteries that do not exist in other areas of Iraq.” (Voices from Amara)<br><br><strong>God’s Kindness</strong><br><br>“It\'s a testament to God\'s kindness that creation isn\'t confined to any particular sect or class. Iraq takes pride in individuals like Abdul Jabbar Abdullah, a renowned physicist honoured worldwide, even gifted a personal pen by Einstein for his excellence. Maysan cherishes him as one of their own, a sentiment shared by Qal\'at Salih, his hometown. Entrusted by Abdul Karim Qasim to lead Baghdad University, Abdullah aimed to foster genuine intellectual growth, but his efforts were thwarted by senseless acts. Despite his untimely passing, his potential loss is deeply felt. Similarly, Abdul Razzaq Abdul Wahid, a towering figure in vertical poetry, leaves an indelible mark. Al-Jawahiri once beautifully symbolized Iraqi poetry\'s essence, citing Amara and Basra, representing Abdul Razzaq Abdul Wahid and Al-Sayyab, respectively. Lamia’a Abbas Amara, a celebrated poetess known for her warmth, alongside numerous Sabian contributors, further enrich Iraq\'s literary landscape. Noteworthy is the jeweler Zahroun, whose mastery astonished even when using simpler tools. These individuals, with their talents and contributions, stand ready to serve their country whenever the opportunity arises.” (Voices from Masan)' },
+    { index: 6, text: '', audio: '', hasText : true, hasAudio : true, hasHover : true, text: '<strong>Distinguished People</strong><br><br>“What distinguishes them from the rest is that they are peaceful, kind, and intelligent people. …We had good relationships with them. A Sabian teacher named Muhtam, who was an English and mathematics teacher, used to take us walking to Al-Mushiriya and bring us back walking. He showed us the beach and the orchards.” (Voices from Amara)' },
     { index: 7, text: '', audio: '', hasText : false, hasAudio : true, hasHover : true },
-    { index: 8, text: '', audio: '', hasText : true, hasAudio : true, hasHover : true },
-    { index: 9, text: '', audio: '', hasText : true, hasAudio : true, hasHover : true },
+    { index: 8, text: '', audio: '', hasText : true, hasAudio : true, hasHover : true, text: '<strong>Burial Traditions</strong><br><br>“The Mandaean cemetery was located at the end of the Al-Zahra neighbourhood, separate from the Muslim and Jewish cemeteries. In the Mandaean faith, a funeral procession is not allowed to cross the river. Their burial customs were different from Muslims.” (Voices from Amara)' },
+    { index: 9, text: '', audio: '', hasText : true, hasAudio : true, hasHover : true, text: '<strong>Living in One Home</strong><br><br>"I lived near the house of Jabbar Abu Bashar, and at that time, we did not distinguish between religions or sects. The temptations of modern life were not available then. We used to play together and eat together, Muslims, Christians, and Sabaeans, without discrimination. We competed in climbing palm trees, played traditional games like marbles and football, and the purpose of the competition was very spontaneous. They were very involved in agriculture, and their children invited us into their homes to eat mulberries, grapes, and carrots. …“Their behaviour reflected sincerity, honesty, and chivalry. If they saw you in trouble, they would never leave you alone and would stand by your side, whether in your joys or sorrows. …"They had special celebrations like \'Banja,\' during which, amazingly, it used to rain. This was considered a sign that it was their true celebration. …“When they hosted wedding celebrations, they would bring a Muslim cook, acknowledging our adherence to Islamic slaughter. If anything, this reflects their desire for the enduring warmth of friendship and social relations with us.” (Voices from Amara)<br><br><strong>Living alongside the Mandaean community</strong><br><br>The Sabians lived in the Sabian neighbourhood, not in our neighbourhood. We were in the western part of the city. The Sabian neighbourhood was the largest and oldest neighbourhood. It included Al-Husseinia and extended from Lutfa to the other side of the city. The Sabian neighbourhoods were large neighbourhoods with a lot of students and produced many scholars. All the neighbourhoods of Hurriya, such as Abdullah and others, were large Sabian neighbourhoods. I attended Tadaiya School in the Qalaat Saleh in 1948. It opened in 1925. In the first grade, our teacher was Syed Hamed Syed Khalaf and his brother Syed Hassan Sheikh Zain. There were many students in the school. The Sabians were very peaceful people. Currently, the Sabians have all left. Only a few remain, maybe two or three young people. All the rest have left and went to America, Germany and elsewhere.” (Voices from Amara)<br><br><strong>The Mandaean houses</strong><br><br>“The Mandaean houses were all built in a similar style – an iwan/reception room on the right when you enter, no diwaniya, and rooms in a row beyond that where the family lived. The mud brick houses are all gone now.” (Voices from Amara)<br><br><strong>Brotherly Bond</strong><br><br>"My relationship with them is not just a friendship, but they are my brothers. I would enter their homes just as I would enter my own siblings\' homes. We communicate and support each other like brothers and one family. Just as I protect my home, I would protect theirs due to the strength of our relationship. …"Before 2003, I was in school, and one of my close Sabian friends was named Ihab. …One day, Ihab ran out of cold drinking water, so he asked me for some. I gave him my water bottle, and he wanted to pour from it into his own bottle, but I refused. I asked him to drink directly from my bottle because he was my friend, and I did not see any difference between us. My relationship with him was so close that before he emigrated from Iraq, he stayed at my house for two days, as if he was leaving a family member, not just a friend." (Voices from Maysan)' },
     { index: 10, text: '', audio: '', hasText : false, hasAudio : false, hasHover : false },
     { index: 11, text: '', audio: '', hasText : false, hasAudio : false, hasHover : false },
     { index: 12, text: '', audio: '', hasText : false, hasAudio : true, hasHover : true },
-    { index: 13, text: '', audio: '', hasText : true, hasAudio : false, hasHover : true },
-    { index: 14, text: '', audio: '', hasText : true, hasAudio : true, hasHover : true },
-    { index: 15, text: '', audio: '', hasText : true, hasAudio : false, hasHover : true },
+    { index: 13, text: '', audio: '', hasText : true, hasAudio : false, hasHover : true, text: '<strong>Making a beautiful fabric of the city</strong><br><br>"Frankly, I remembered many beautiful things, to the extent that you can see the smile drawn on my face, when we used to play and have fun, when we used to go to the river bank near Mandi\'s place when we used to greet each other, joke around, and share joy and sorrow, and we didn\'t know the meaning of being a Sabi, Muslim, or Christian; we were making a beautiful fabric of the city. …"A simple park has been established in a small area near the Nasiriya Mandi, and it has become a gathering place for all segments of the Iraqi people. If a park or a flower can bring together our scattered pieces, then what memories of life, childhood, lineage, school, and neighbours can do? …My feeling when my Mandean friends emigrated is like the feeling of losing a limb from one\'s body, like losing a hand or a foot. That\'s how I felt when they left. I used to share my life with them in all its details, only for them to disappear overnight." (Voices from Nassiryah) <br><br><strong>Indistinguishable</strong><br><br>"I couldn\'t distinguish them in the city of Rifai where we shared the same style of clothing. They were brought up well, and they were characterized by high morals. They were very sociable, interacting with people during their occasions, and when they passed by us, they greeted us in the Islamic way without any discrimination." (Voices from Nassiryah)' },
+    { index: 14, text: '', audio: '', hasText : true, hasAudio : true, hasHover : true, text: '<strong>Traditions</strong><br><br>“I remember there were some unique traditions and customs, such as the use of water in marriage and childbirth, and purification. These are the most famous traditions. But they are also from the nature of being human.” (Voices from Amara)' },
+    { index: 15, text: '', audio: '', hasText : true, hasAudio : false, hasHover : true, text: '<strong>Mandaean Crafts</strong><br><br>“In the past, they had many shops in the market. They had two or three goldsmiths, carpenters for boats, metalworkers for plows, and stonemasons. The Sabian carpenters existed in those areas. Their main occupations were carpentry, metalworking, making sickles, and goldsmithing. They were known for goldsmithing, the Sabians were the goldsmiths and no one could match them in this craft. As for the Sabian carpenters, they worked in making bride chairs.” (Voices from Amara)<br><br><strong>The Balam of the Mandaeans</strong><br><br>“The Mandaeans are well-known for practicing crafts. The people in Maysan are well aware of this fact. For example, agricultural tools are items that deserve recognition in speech. One such tool is the \'saq,\' which refers to a tool used for making a sickle. The sickle is an essential economic tool for agriculture; without a good sickle, the quality of the harvest may suffer. Crafts have contributed greatly throughout history. Among these crafts is the making of the \'balam,\' a small boat. In the past, the \'balam\' served as a means of transportation, carrying people and goods from one area to another. It facilitated merchants in reaching the marketplace and delivering fresh goods, known as \'taza\' in the local vernacular. …Unfortunately, we still fail to give them the credit they deserve for their craftsmanship.” (Voices from Maysan)' },
     { index: 16, text: '', audio: '', hasText : false, hasAudio : true, hasHover : true },
     { index: 17, text: '', audio: '', hasText : false, hasAudio : false, hasHover : true },
-    { index: 18, text: '', audio: '', hasText : true, hasAudio : false, hasHover : true },
-    { index: 19, text: '', audio: '', hasText : true, hasAudio : false, hasHover : true },
+    { index: 18, text: '', audio: '', hasText : true, hasAudio : false, hasHover : true, text: '<strong>The Sabians\' connection to water is divine</strong><br><br>“It is divine wisdom that water is the essence of everything. Water revitalizes and sustains life for humans and all creations. It is a fundamental component, both physically and spiritually, permeating every aspect of life. Just as science evolves with society, divine wisdom continually introduces new elements to complement existing ones. Integration, as mentioned by Sabians, Jews, and Christians, in Islam signifies integration with the noble Prophet, peace be upon him and his family. A complete individual requires comprehensive knowledge and a harmonious household to thrive in a society that embraces integration. May we achieve such unity in the end journey of life, by the will of God.” (Voices from Maysan)' },
+    { index: 19, text: '', audio: '', hasText : true, hasAudio : false, hasHover : true, text: '<strong>Sabian Temples</strong><br><br>“There are three temples here in Qalaat Saleh. One of them is in front of the ruler’s house and one is among the ruins. They had a small temple near the governors house which they used. These were their areas but they were many in number.” (Voices from Amara)' },
     { index: 20, text: '', audio: '', hasText : false, hasAudio : false, hasHover : false },
-    { index: 21, text: '', audio: '', hasText : true, hasAudio : false, hasHover : true },
+    { index: 21, text: '', audio: '', hasText : true, hasAudio : false, hasHover : true, text: '<strong>‘Builders of Iraq’</strong><br><br>"The Sabaeans are the foundation of Iraq; they are among the ones who built Iraq 4000 years ago. They are the fundamental roots of Iraq, as is the case with the Assyrians and Chaldeans. The Sabaeans revere water, as is the case in all religions, including Islam, due to the significant role of water in creation, as mentioned in the Holy Quran: \'And We created from water every living thing.\' …I am deeply sorry for their migrated, as they are partners in the homeland, city, school, and lifelong companions." (Voices from Amara)<br><br><strong>‘Respect & Peace’</strong><br><br>"When we were young, during the monarchy era, we didn\'t understand matters of religions and sects. One day, one of the elders of the area approached us and informed us that the Mandaeans worship by the river. He advised us not to go to the river during their holidays so as not to disturb them with our presence nearby. We respected this and gave them their space to enjoy peace and continue their worship." (Voices from Nassiryah)' },
     { index: 22, text: '', audio: '', hasText : false, hasAudio : false, hasHover : false },
     { index: 23, text: '', audio: '', hasText : false, hasAudio : false, hasHover : false },
-    { index: 24, text: '', audio: '', hasText : true, hasAudio : false, hasHover : true },
+    { index: 24, text: '', audio: '', hasText : true, hasAudio : false, hasHover : true, text: '<strong>‘Creative in everything’</strong><br><br>“They were creative in everything, not just in craftsmanship, blacksmithing, and carpentry; they were artists, scholars, and exceptionally intelligent poets. In the city where there were no televisions or entertainment venues, we would sit in cafes on the riverbank and play dominoes together, Muslims and Sabaeans, without discrimination. They were characterized by intelligence, wit, culture, and unwavering loyalty to their friends." (Voices from Amara)' },
     { index: 25, text: '', audio: '', hasText : false, hasAudio : false, hasHover : false },
-    { index: 26, text: '', audio: '', hasText : true, hasAudio : false, hasHover : true },
+    { index: 26, text: '', audio: '', hasText : true, hasAudio : false, hasHover : true, text: '<strong>A Breeze in the City</strong><br><br>“I didn\'t realize they were Mandaeans until later. They were like a breeze in the city, honest, and trustworthy, and people bought from them without fear of being cheated. They belonged to one of the wonderful families in the city and were a pillar of strength in the community. …"It was the custom of the city that a funeral procession would pass through the main market. So, the Sabians would close their shops and stand in respect for the deceased. This noble gesture also occurred during religious occasions such as Ashura and others. Therefore, we do not feel that there is any difference between us. …"When the Sabian friends informed us of their departure, I went with all members of my family to their house. It was one of the hardest and most sorrowful times for me, as I returned home unconscious due to the intensity of sadness and tears streaming from my eyes. Up until this moment, whenever I remember them, I feel sadness, and the voices of their children ring in my ears, as I used to see them daily, and if I was absent for a day, their children would come to my house and ask me about the reason for my absence, saying, \'Grandma, why didn\'t you visit us today?\' We were just like a single family." (Voices from Nassiryah)<br><br><strong>This is how we are as a society</strong><br><br>“When a material is made of a single component, it becomes fragile and prone to breaking. Just like pure gold lacks the strength and durability of alloys, so do other natural materials like wood, iron, and stone without additives. This fragility mirrors our societal nature, as intended by the Lord. We don’t require rigid categorizations or excessive individualism. In Islam, it’s believed that there are countless ways to reach Allah, akin to the countless breaths we take.” (Voices from Maysan)' },
     { index: 27, text: '', audio: '', hasText : true, hasAudio : true, hasHover : false },
 ]
 
@@ -108,10 +108,8 @@ fetchFont().then(() => {
         }).then(() => {
             initLayerData().then(() => {
                 loadLayerShapesJson().then(() => {
-                    importTextures().then(() => {
-                        createElements();
-                        updateImageSize();
-                    });
+                    createElements();
+                    updateImageSize();
                 });
             });
         });
@@ -125,22 +123,6 @@ async function fetchFont() {
 
 async function initLayerData() {
     for (let i = 0; i <= layersCount; i++) {
-        if(data[i].hasText === true) {   
-            try {
-                await fetch(`./assets/texts/${i + 1}.txt`)
-                .then(response => response.text())
-                .then(text => {
-                    if(text !== undefined && text.startsWith('<!DOCTYPE html>')) {
-                        data[i].text = '';
-                    } else {
-                        data[i].text = text;
-                    }
-                });
-            } catch (error) {
-                data[i].text = '';
-            }
-        }
-
         if(data[i].hasAudio) {
             if(data[i].audio !== '') {
                 setAudio(data[i].audio, container);
@@ -196,18 +178,6 @@ async function importImportantTextures() {
     scrollbarUI = await Assets.load('./assets/UI/ScrollBar.png');
     scrollbarButtonUI = await Assets.load('./assets/UI/ScrollBarButton.png');
     closeButtonUI = await Assets.load('./assets/UI/CloseButton.png');
-}
-
-async function importTextures() {
-    for (let i = 2; i <= 27; i++) {
-        let texture = await Assets.load(`./assets/textures/frames/${i}.png`);
-        layerTextures.push(texture);
-        if(findData(i).hasHover === true) {
-            layersHoverTextures.push(await Assets.load(`./assets/textures/frames/${i}-Hover.png`));
-        } else {
-            layersHoverTextures.push(texture);
-        }
-    }
 }
 
 function init() {
@@ -697,8 +667,9 @@ function createMuralBackground()
 
 function createLayers() {
     for (let i = 0; i < layersCount; i++) {
+        let layerTexture = getTexture(i + 2);
         const layerContext = new GraphicsContext()
-            .texture(layerTextures[i], 0xffffff, -layerTextures[i].width / 2, -layerTextures[i].height / 2)
+            .texture(layerTexture, 0xffffff, -layerTexture.width / 2, -layerTexture.height / 2)
         const layerGfx = new Graphics(layerContext);
         layerGfx.zIndex = i;
         layerGraphics.push(layerGfx);
@@ -709,8 +680,9 @@ function createLayers() {
 
 function highlightLayer(i) {
     layerGraphics[i].clear();
+    let hoverTexture = getHoverTexture(i + 2);
     const layerContext = new GraphicsContext()
-        .texture(layersHoverTextures[i], 0xffffff, -layerTextures[i].width / 2, -layerTextures[i].height / 2)
+        .texture(hoverTexture, 0xffffff, -hoverTexture.width / 2, -hoverTexture.height / 2)
     layerGraphics[i] = new Graphics(layerContext);
     layerGraphics[i].zIndex = i;
     bgGraphics.addChild(layerGraphics[i]);
@@ -718,8 +690,9 @@ function highlightLayer(i) {
 
 function unhighlightLayer(i) {
     layerGraphics[i].clear();
+    let layerTexture = getTexture(i + 2);
     const layerContext = new GraphicsContext()
-        .texture(layerTextures[i], 0xffffff, -layerTextures[i].width / 2, -layerTextures[i].height / 2)        
+        .texture(layerTexture, 0xffffff, -layerTexture.width / 2, -layerTexture.height / 2)        
     layerGraphics[i] = new Graphics(layerContext);
     layerGraphics[i].zIndex = i;
     bgGraphics.addChild(layerGraphics[i]);
@@ -746,7 +719,7 @@ function create_layer_collider(i) {
     layerGfx.zIndex = i * layersCount;
 
     let isInteracting = false;
-    if(layersHoverTextures[i].label.includes('Hover')) {
+    if(findData(i + 2).hasHover == true) {
         isInteracting = true;
         layerGfx.alpha = 0;
     }
@@ -842,6 +815,18 @@ function closePopup() {
 
 function findData(index) {
     return data.find((item) => item.index === index);
+}
+
+function getTexture(index) {
+    const image = document.getElementById('image' + index);
+    const texture = Texture.from(image);
+    return texture;
+}
+
+function getHoverTexture(index) {
+    const image = document.getElementById('image-hover-' + index);
+    const texture = Texture.from(image);
+    return texture;
 }
 
 app.stage.eventMode = 'static';
