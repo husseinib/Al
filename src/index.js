@@ -28,7 +28,6 @@ const screenSizeDiv = document.getElementById('screen-size');
 const app = new Application();
 await app.init({ background: '#AA9458', width: SCREENWIDTH, height: SCREENHEIGHT, resizeTo: screenSizeDiv });
 document.body.appendChild(app.canvas);
-console.log(document.parentElement);
 
 const layersCount = 25;
 const globalXScale = 1;
@@ -42,7 +41,7 @@ let textFontSize = 16;
 
 let viewport;
 let backgroundTexture;
-let bgGraphics, mapGraphics;
+let bgGraphics, mapBgGraphics, mapLayerGraphics;
 let layerGraphics = [];
 let screenWidth,
     screenHeight,
@@ -174,6 +173,10 @@ function calculateImageWidths() {
 }
 
 const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton = false, pageSize) => {
+    if(closeMuralButtongfx) {
+        closeMuralButtongfx.visible = false;
+    }
+
     const container = new Container();
     currentPopupContainer = container;
     container.x = x;
@@ -182,6 +185,8 @@ const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton =
     let popupTopPadding = 0.3;
     if(isMobile) {
         popupTopPadding = 0.15;
+        CONTENTS_W = SCREENWIDTH * 0.8;
+        SCROLLBAR_H = SCREENHEIGHT * 0.5;
     }
 
     let boxXPosition = -CONTENTS_W * 0.05;
@@ -195,11 +200,19 @@ const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton =
 
     if(hasMuralButton == false) {
         if(audioOnly) {
-            boxXPosition = -CONTENTS_W * 0.05;
-            boxYPosition = -SCROLLBAR_H * popupTopPadding;
-            boxWidth = CONTENTS_W + CONTENTS_W * 0.11;
-            boxHeight = SCROLLBAR_H * 0.3;
-            closeButtonY = -SCROLLBAR_H * popupTopPadding * 0.92;
+            if(isMobile) {
+                boxXPosition = -CONTENTS_W * 0.05;
+                boxYPosition = -SCROLLBAR_H * 0.15;
+                boxWidth = CONTENTS_W + (CONTENTS_W * 0.05) * 2;
+                boxHeight = SCROLLBAR_H * 0.2;
+                closeButtonY = -SCROLLBAR_H * popupTopPadding * 0.92;
+            } else {
+                boxXPosition = -CONTENTS_W * 0.05;
+                boxYPosition = -SCROLLBAR_H * popupTopPadding;
+                boxWidth = CONTENTS_W + CONTENTS_W * 0.11;
+                boxHeight = SCROLLBAR_H * 0.3;
+                closeButtonY = -SCROLLBAR_H * popupTopPadding * 0.92;
+            }
         } else if(textOnly) {
             let paddingScale = 0.8;
 
@@ -220,13 +233,14 @@ const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton =
     const closeButtongfx = new Graphics().texture(closeButtonUI, 0xffffff, 0, 0, 32, 32);
     closeButtongfx.zIndex = 1000;
     closeButtongfx.x = CONTENTS_W * (isMobile ? 0.88 : 0.8)
-    closeButtongfx.y = closeButtonY;
+    closeButtongfx.y = closeButtonY * (isMobile ? 1.1 : 1);
     closeButtongfx.interactive = true;
     closeButtongfx.buttonMode = true;
     closeButtongfx.cursor = 'pointer';
     closeButtongfx.hitArea = new Rectangle(0, 0, 32, 32);
     closeButtongfx.on('pointerdown', () => {
         closePopup();
+        closeMuralButtongfx.visible = true;
     });
     isMobile ? closeButtongfx.scale.set(5) : closeButtongfx.scale.set(3);
     container.addChild(closeButtongfx);
@@ -234,7 +248,7 @@ const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton =
     if(hasMuralButton === true) {
         muralButton = new Graphics().rect(0, 0, 128, 32).fill(0x837D5A);
         muralButton.zIndex = 1100;
-        muralButton.x = CONTENTS_W / 2 * (isMobile ? 0.3 : 0.5);
+        muralButton.x = CONTENTS_W / 2 * (isMobile ? 0.6 : 0.5);
         muralButton.y = -SCROLLBAR_H * (isMobile ? 0.1 : 0.2);
         muralButton.interactive = true;
         muralButton.buttonMode = true;
@@ -303,7 +317,7 @@ const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton =
 function setAudio(layerData, container) {
     let audioTopPadding = 0.2;
     if(isMobile) {
-        audioTopPadding = 0.05;
+        audioTopPadding = 0.08;
     }
 
     popupAudioElement = document.getElementById('audio' + layerData.index);
@@ -319,7 +333,7 @@ function setAudio(layerData, container) {
   
 const getScrollBarBase = (w, h, color) => {
     const g = new Graphics();
-    g.rect(0, 0, w, h).fill(color).texture(scrollbarUI, 0xffffff, 0, 0, w, h);
+    g.rect(0, 0, w, h).texture(scrollbarUI, 0xffffff, -w, 0, w, h);
     g.hitArea = new Rectangle(0, 0, w, h);
     g.zIndex = 999;
     return g;
@@ -328,9 +342,9 @@ const getScrollBarBase = (w, h, color) => {
 const getScrollBarButton = (width, color) => {
     const ratio = 0.5;
     const g = new Graphics();
-    g.rect(-width / 2, -width * ratio, width, width).texture(scrollbarButtonUI, 0xffffff, -width / 2, -width * ratio, width, width);
+    g.rect(-width * 1.5, -width * ratio, width, width).texture(scrollbarButtonUI, 0xffffff, -width * 1.5, -width * ratio, width, width);
 
-    g.hitArea = new Rectangle(-width / 2, -width * ratio, width, width);
+    g.hitArea = new Rectangle(-width * 1.5, -width * ratio, width, width);
     g.x = width / 2;
     g.zIndex = 1000;
     return g;
@@ -439,6 +453,11 @@ function updateImageSize() {
         bgGraphics.height = imageHeight;
     }
 
+    if(mapBgGraphics) {
+        mapBgGraphics.width = imageWidth;
+        mapBgGraphics.height = imageHeight;
+    }
+
     canLoadMural = true;
 }
 
@@ -459,22 +478,60 @@ function createCloseMuralButton() {
 }
 
 function createMap() {
-    let mapWidth = SCREENWIDTH;
-    let mapHeight = SCREENHEIGHT;
-    if(isMobile) {
-        mapWidth = mapTexture.width;
-        mapHeight = mapTexture.height;
-    }
-
-    mapGraphics = new Graphics()
-        .texture(mapTexture, 0xffffff, 0, 0, mapWidth, SCREENHEIGHT);
-    mapGraphics.zIndex = 900;
-    // mapGraphics.scale.set(0.8, 0.75);
-    mapGraphics.x = viewport.center.x - (isMobile ? SCREENWIDTH : SCREENWIDTH / 2)
-    mapGraphics.y = viewport.center.y - SCREENHEIGHT / 2;
+    const bgContext = new GraphicsContext()
+        .rect(-backgroundTexture.width/2, 0, backgroundTexture.width, backgroundTexture.height)
+        .texture(mapTexture, 0xffffff, -backgroundTexture.width / 2, -backgroundTexture.height / 2)
+    mapBgGraphics = new Graphics(bgContext);
+    mapBgGraphics.scale.set(globalXScale, globalYScale);
+    mapBgGraphics.x = viewport.center.x;
+    mapBgGraphics.y = viewport.center.y;
+    mapBgGraphics.zIndex = 950;
+    mapBgGraphics.interactive = true;
+    mapBgGraphics.buttonMode = true;
+    mapBgGraphics.eventMode = 'static';
+    mapBgGraphics.hitArea = new Rectangle(-backgroundTexture.width / 2, -backgroundTexture.height / 2, backgroundTexture.width, backgroundTexture.height);
     
-    viewport.addChild(mapGraphics);
+    viewport.addChild(mapBgGraphics);
+
+    createMapLayer();
+}
+
+function createMapLayer() {
+    const layerContext = new GraphicsContext()
+        .texture(mapTexture, 0xffffff, -mapTexture.width / 2, -mapTexture.height / 2)
+    mapLayerGraphics = new Graphics(layerContext);
+    mapLayerGraphics.zIndex = 960;
+    mapBgGraphics.addChild(mapLayerGraphics);
+
     create_map_collider();
+}
+
+function highlightMap() {
+    mapLayerGraphics.clear();
+    const bgContext = new GraphicsContext()
+        .texture(mapHoverTexture, 0xffffff, -backgroundTexture.width / 2, -backgroundTexture.height / 2)
+    mapLayerGraphics = new Graphics(bgContext);
+    mapLayerGraphics.scale.set(globalXScale, globalYScale);
+    mapLayerGraphics.zIndex = 960;
+    mapLayerGraphics.interactive = true;
+    mapLayerGraphics.buttonMode = true;
+    mapLayerGraphics.eventMode = 'static';
+    mapLayerGraphics.hitArea = new Rectangle(-backgroundTexture.width / 2, -backgroundTexture.height / 2, backgroundTexture.width, backgroundTexture.height);
+    mapBgGraphics.addChild(mapLayerGraphics);
+}
+
+function unhighlightMap() {
+    mapLayerGraphics.clear();
+    const bgContext = new GraphicsContext()
+        .texture(mapTexture, 0xffffff, -backgroundTexture.width / 2, -backgroundTexture.height / 2)
+    mapLayerGraphics = new Graphics(bgContext);
+    mapLayerGraphics.scale.set(globalXScale, globalYScale);
+    mapLayerGraphics.zIndex = 960;
+    mapLayerGraphics.interactive = true;
+    mapLayerGraphics.buttonMode = true;
+    mapLayerGraphics.eventMode = 'static';
+    mapLayerGraphics.hitArea = new Rectangle(-backgroundTexture.width / 2, -backgroundTexture.height / 2, backgroundTexture.width, backgroundTexture.height);
+    mapBgGraphics.addChild(mapLayerGraphics);
 }
 
 function create_map_collider() {
@@ -483,8 +540,8 @@ function create_map_collider() {
     if(mapShape !== undefined) {
         mapShape.points.forEach(point => {
             for (let j = 0; j < point.length; j+=2) {
-                points.push(point[j]);
-                points.push(point[j + 1]);
+                points.push(point[j] - backgroundTexture.width / 2);
+                points.push(point[j + 1] - backgroundTexture.height / 2);
             }
         });
     }
@@ -495,17 +552,14 @@ function create_map_collider() {
 
     const layerGfx = new Graphics(layerContext);
     layerGfx.alpha = 0;
-    layerGfx.zIndex = 901;
+    layerGfx.zIndex = 970;
     layerGfx.interactive = true;
     layerGfx.cursor = 'pointer';
     layerGfx.hitArea = new Polygon(points);
-    // layerGfx.x = viewport.center.x - (isMobile ? SCREENWIDTH : SCREENWIDTH / 2)
-    // layerGfx.y = viewport.center.y - SCREENHEIGHT / 2;
     layerGfx.on('pointerover', () => {
         highlightMap();
     });
     layerGfx.on('pointerout', () => {
-        // closePopup();
         unhighlightMap();
     });
     layerGfx.on('pointerdown', (e) => {
@@ -528,47 +582,8 @@ function create_map_collider() {
             y = layerGfx.toGlobal(centroid).y - popupHeight/2;
         }
         initScrollBar(app.stage, app.canvas, description, x, y, true, 1);
-        // toggleMuralVisibility();
     });
-    mapGraphics.addChild(layerGfx);
-}
-
-function highlightMap() {
-    let mapWidth = SCREENWIDTH;
-    let mapHeight = SCREENHEIGHT;
-    if(isMobile) {
-        mapWidth = mapTexture.width;
-        mapHeight = mapTexture.height;
-    }
-
-    mapGraphics.clear();
-    const layerContext = new GraphicsContext()
-        .texture(mapHoverTexture, 0xffffff, 0, 0, mapWidth, SCREENHEIGHT)
-    mapGraphics = new Graphics(layerContext);
-    mapGraphics.zIndex = 900;
-    // mapGraphics.scale.set(0.8, 0.75);
-    mapGraphics.x = viewport.center.x - (isMobile ? SCREENWIDTH : SCREENWIDTH / 2)
-    mapGraphics.y = viewport.center.y - SCREENHEIGHT / 2;
-    viewport.addChild(mapGraphics);
-}
-
-function unhighlightMap() {
-    let mapWidth = SCREENWIDTH;
-    let mapHeight = SCREENHEIGHT;
-    if(isMobile) {
-        mapWidth = mapTexture.width;
-        mapHeight = mapTexture.height;
-    }
-
-    mapGraphics.clear();
-    const layerContext = new GraphicsContext()
-        .texture(mapTexture, 0xffffff, 0, 0, mapWidth, SCREENHEIGHT)
-    mapGraphics = new Graphics(layerContext);
-    mapGraphics.zIndex = 900;
-    // mapGraphics.scale.set(0.8, 0.75);
-    mapGraphics.x = viewport.center.x - (isMobile ? SCREENWIDTH : SCREENWIDTH / 2)
-    mapGraphics.y = viewport.center.y - SCREENHEIGHT / 2;
-    viewport.addChild(mapGraphics);
+    mapBgGraphics.addChild(layerGfx);
 }
 
 function toggleMuralVisibility() {
@@ -576,14 +591,14 @@ function toggleMuralVisibility() {
     if(isMuralVisible) {
         bgGraphics.visible = false;
         isMuralVisible = false;
-        mapGraphics.visible = true;
+        mapBgGraphics.visible = true;
         viewport.plugins.pause('drag')
         closeMuralButtongfx.visible = false;
         viewport.moveCenter(viewPortCenter.x, viewPortCenter.y);
     } else {
         bgGraphics.visible = true;
         isMuralVisible = true;
-        mapGraphics.visible = false;
+        mapBgGraphics.visible = false;
         closeMuralButtongfx.visible = true;
         viewport.plugins.resume('drag')
     }
@@ -791,10 +806,10 @@ app.stage.hitArea = app.screen;
 app.ticker.add((time) => {
     if(closeMuralButtongfx) {
         if(isMobile) {
-            closeMuralButtongfx.x = viewport.center.x + window.innerWidth * 0.3;
+            closeMuralButtongfx.x = viewport.center.x - 16;
             closeMuralButtongfx.y = viewport.center.y - window.innerHeight * 0.48;
         } else {
-            closeMuralButtongfx.x = viewport.center.x + window.innerWidth * 0.45;
+            closeMuralButtongfx.x = viewport.center.x - 16;
             closeMuralButtongfx.y = viewport.center.y - window.innerHeight * 0.48;
         }
     }
