@@ -26,7 +26,7 @@ function isMobileCheck() {
 
 const screenSizeDiv = document.getElementById('screen-size');
 const app = new Application();
-await app.init({ background: '#AA9458', width: SCREENWIDTH, height: SCREENHEIGHT, resizeTo: screenSizeDiv, resolution: window.devicePixelRatio || 1 });
+await app.init({ background: '#AA9458', width: SCREENWIDTH, height: SCREENHEIGHT, resizeTo: screenSizeDiv });
 document.body.appendChild(app.canvas);
 console.log(document.parentElement);
 
