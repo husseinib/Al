@@ -94,22 +94,17 @@ const data = [
     { index: 27, text: '', audio: '', hasText : true, hasAudio : true, hasHover : false },
 ]
 
-const description = { index: -1, text: '', audio: '', hasText : true, hasAudio : false };
+const description = { index: -1, audio: '', hasText : true, hasAudio : false, text: '<center><strong>Reclaiming history through story and memory Mural</strong><br></center><br><br><center><em>Description Paragraph</em></center><br><br>This mural is an abstraction of the conditions and descriptions collected from interviews with Mandaeans in the diaspora and non-Mandaean Iraqi communities from Nassryah and Amara cities and who lived side by side with their Mandaean neighbours before their departure from Iraq. The mural is interactive and contains both audio and text that convey memories, belonging and anecdotes of when these communities enjoyed sharing space, relations and intimate social ties. The mural is meant to be felt rather than read, as it is not a historical or religious translation, but an artistic rendering of recorded social feelings.<br><br>هذه الجدارية عبارة عن تجريد للأحوال والأوصاف التي تم جمعها من المقابلات مع المندائيين في الشتات والمجتمعات العراقية غير المندائية من مدينتي الناصرية والعمارة والذين عاشوا جنبًا إلى جنب مع جيرانهم المندائيين قبل مغادرتهم العراق. اللوحة الجدارية تفاعلية وتحتوي على صوت ونص ينقل الذكريات والانتماء والحكايات عندما استمتعت هذه المجتمعات بتقاسم المساحة والعلاقات الاجتماعية الحميمة. من المفترض أن يتم الشعور بالجدارية وليس قرائتها حرفيا ، لأنها ليست ترجمة تاريخية أو دينية، ولكنها عرض فني للمشاعر الاجتماعية المسجلة٠' };
 
 let canLoadMural = false;
 
 fetchFont().then(() => {
-    importImportantTextures().then(() => {
-        loadMapData().then(() => {
-            init();
-            createMap();
-        }).then(() => {
-            loadLayerShapesJson().then(() => {
-                createElements();
-                updateImageSize();
-            });
-        });
-    });
+    loadShapesData();
+    importImportantTextures();
+    init();
+    createMap();
+    createElements();
+    updateImageSize();
 });
 
 async function fetchFont() {
@@ -117,42 +112,19 @@ async function fetchFont() {
     console.log('Font loaded');
 }
 
-async function loadMapData() {
-    await fetch(`./assets/shapes/map_shape.json`)
-    .then(response => response.json())
-    .then(data => {
-        mapShape = data.shapes[0];
-    });
-
-    await fetch(`./assets/texts/description.txt`)
-    .then(response => response.text())
-    .then(text => {
-        if(text !== undefined && text.startsWith('<!DOCTYPE html>')) {
-            description.text = '';
-        } else {
-            description.text = text;
-        }
-    });
+function loadShapesData() {
+    mapShape = getJsonDataById('map_shape').shapes[0];
+    shapes = getJsonDataById('shapes').shapes;
 }
 
-async function loadLayerShapesJson() {
-    await fetch(`./assets/shapes/shapes.json`)
-    .then(response => response.json())
-    .then(data => {
-        data.shapes.forEach((shape) => {
-            shapes.push(shape);
-        });
-    });
-}
-
-async function importImportantTextures() {
-    mapTexture = await Assets.load('./assets/textures/map/map.png');
-    mapHoverTexture = await Assets.load('./assets/textures/map/map-hover.png');
-    backgroundTexture = await Assets.load('./assets/textures/background.png');
-    boxUI = await Assets.load('./assets/UI/Box1.png');
-    scrollbarUI = await Assets.load('./assets/UI/ScrollBar.png');
-    scrollbarButtonUI = await Assets.load('./assets/UI/ScrollBarButton.png');
-    closeButtonUI = await Assets.load('./assets/UI/CloseButton.png');
+function importImportantTextures() {
+    mapTexture = getTextureByID('mapTexture');
+    mapHoverTexture = getTextureByID('mapHoverTexture');
+    backgroundTexture = getTextureByID('backgroundTexture');
+    boxUI = getTextureByID('boxUI');
+    scrollbarUI = getTextureByID('scrollbarUI');
+    scrollbarButtonUI = getTextureByID('scrollbarButtonUI');
+    closeButtonUI = getTextureByID('closeButtonUI');
 }
 
 function init() {
@@ -789,6 +761,16 @@ function closePopup() {
 
 function findData(index) {
     return data.find((item) => item.index === index);
+}
+
+function getJsonDataById(id) {
+    return JSON.parse(document.getElementById(id).textContent);
+}
+
+function getTextureByID(id) {
+    const image = document.getElementById(id);
+    const texture = Texture.from(image);
+    return texture;
 }
 
 function getTexture(index) {
