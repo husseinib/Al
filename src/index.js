@@ -52,7 +52,7 @@ let mapShape;
 let boxUI, scrollbarUI, scrollbarButtonUI, closeButtonUI;
 let currentPopupScrollbar, currentPopupContainer, popupAudioElement;
 let mapTexture, mapHoverTexture;
-let closeMuralButtongfx;
+let closeMuralButton;
 let muralButton, muralText;
 let font;
 
@@ -93,7 +93,7 @@ const data = [
     { index: 27, text: '', audio: '', hasText : true, hasAudio : true, hasHover : false },
 ]
 
-const description = { index: -1, audio: '', hasText : true, hasAudio : false, text: '<center><strong>Reclaiming history through story and memory Mural</strong><br></center><br><br><center><em>Description Paragraph</em></center><br><br>This mural is an abstraction of the conditions and descriptions collected from interviews with Mandaeans in the diaspora and non-Mandaean Iraqi communities from Nassryah and Amara cities and who lived side by side with their Mandaean neighbours before their departure from Iraq. The mural is interactive and contains both audio and text that convey memories, belonging and anecdotes of when these communities enjoyed sharing space, relations and intimate social ties. The mural is meant to be felt rather than read, as it is not a historical or religious translation, but an artistic rendering of recorded social feelings.<br><br>هذه الجدارية عبارة عن تجريد للأحوال والأوصاف التي تم جمعها من المقابلات مع المندائيين في الشتات والمجتمعات العراقية غير المندائية من مدينتي الناصرية والعمارة والذين عاشوا جنبًا إلى جنب مع جيرانهم المندائيين قبل مغادرتهم العراق. اللوحة الجدارية تفاعلية وتحتوي على صوت ونص ينقل الذكريات والانتماء والحكايات عندما استمتعت هذه المجتمعات بتقاسم المساحة والعلاقات الاجتماعية الحميمة. من المفترض أن يتم الشعور بالجدارية وليس قرائتها حرفيا ، لأنها ليست ترجمة تاريخية أو دينية، ولكنها عرض فني للمشاعر الاجتماعية المسجلة٠' };
+const description = { index: -1, audio: '', hasText : true, hasAudio : false, text: '<center><strong>Reclaiming history through story and memory Mural</strong></center><br><br><center><em>Description Paragraph</em></center><br><br>This mural is an abstraction of the conditions and descriptions collected from interviews with Mandaeans in the diaspora and non-Mandaean Iraqi communities from Nassryah and Amara cities and who lived side by side with their Mandaean neighbours before their departure from Iraq. The mural is interactive and contains both audio and text that convey memories, belonging and anecdotes of when these communities enjoyed sharing space, relations and intimate social ties. The mural is meant to be felt rather than read, as it is not a historical or religious translation, but an artistic rendering of recorded social feelings.<br><br>هذه الجدارية عبارة عن تجريد للأحوال والأوصاف التي تم جمعها من المقابلات مع المندائيين في الشتات والمجتمعات العراقية غير المندائية من مدينتي الناصرية والعمارة والذين عاشوا جنبًا إلى جنب مع جيرانهم المندائيين قبل مغادرتهم العراق. اللوحة الجدارية تفاعلية وتحتوي على صوت ونص ينقل الذكريات والانتماء والحكايات عندما استمتعت هذه المجتمعات بتقاسم المساحة والعلاقات الاجتماعية الحميمة. من المفترض أن يتم الشعور بالجدارية وليس قرائتها حرفيا ، لأنها ليست ترجمة تاريخية أو دينية، ولكنها عرض فني للمشاعر الاجتماعية المسجلة٠' };
 
 let canLoadMural = false;
 
@@ -104,6 +104,7 @@ fetchFont().then(() => {
     createMap();
     createElements();
     updateImageSize();
+    subscribeToEvents();
 });
 
 async function fetchFont() {
@@ -127,6 +128,8 @@ function importImportantTextures() {
 }
 
 function init() {
+    closeMuralButton = document.getElementsByClassName('close-mural')[0];
+
     imageWidth = backgroundTexture.width;
     imageHeight = backgroundTexture.height;
 
@@ -240,7 +243,6 @@ const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton =
     closeButtongfx.hitArea = new Rectangle(0, 0, 32, 32);
     closeButtongfx.on('pointerdown', () => {
         closePopup();
-        closeMuralButtongfx.visible = true;
     });
     isMobile ? closeButtongfx.scale.set(5) : closeButtongfx.scale.set(3);
     container.addChild(closeButtongfx);
@@ -313,6 +315,75 @@ const initScrollBar = (stage, view, layerData, x = 32, y = 150, hasMuralButton =
         setAudio(layerData, container);
     }
 };
+
+function initPopup(layerData, hasMuralButton = false) {
+    closePopup();
+    let popup = document.getElementsByClassName('popup-container')[0];
+    currentPopupContainer = popup;
+    currentPopupContainer.style.display = 'flex';
+
+    let popupHeader = document.getElementsByClassName('popup-header')[0];
+
+    let popupTextContent = document.getElementById('text-content');
+    popupTextContent.innerHTML = convertLayerDataTextToHTML(layerData);
+
+    let popupAudioSourceElement = document.getElementById('audio' + layerData.index);
+    if(layerData.hasAudio) {
+        let popupAudioElement = document.getElementById('audio');
+        popupAudioElement.src = popupAudioSourceElement.src;
+        popupAudioElement.style.display = 'block';
+    } else {
+        let popupAudioElement = document.getElementById('audio');
+        popupAudioElement.style.display = 'none';
+    }
+
+    if(hasMuralButton === true) {
+        let muralButton = document.createElement('button');
+        muralButton.innerHTML = 'View Mural';
+        muralButton.className = 'mural-button';
+        muralButton.onclick = () => {
+            if(canLoadMural === false) {
+                return;
+            }
+            closePopup();
+            toggleMuralVisibility();
+        }
+        popupHeader.insertBefore(muralButton, popupHeader.firstChild);
+    }
+
+    if(hasMuralButton == false) {
+        const audioOnly = layerData.hasAudio == true && layerData.hasText == false;
+        const textOnly = layerData.hasAudio == false && layerData.hasText == true;
+        if(audioOnly) {
+            let popupContentContainer = document.getElementsByClassName('popup-content')[0];
+            popupContentContainer.style.display = 'none';
+            popup.style.height = 9.5 + 'vh';
+            popupHeader.style.borderBottom = 'none';
+        }
+        if(textOnly) {
+            popupHeader.style.borderBottom = 'none';
+            // popupHeader.style.display = 'none';
+        }
+    }
+
+    let popupCloseButton = document.getElementsByClassName('close-button')[0];
+    popupCloseButton.onclick = () => {
+        closePopup();
+    }
+}
+
+function convertLayerDataTextToHTML(layerData) {
+    let text = layerData.text;
+    let textArray = text.split('<br><br>');
+    let textHTML = '';
+    for(let i = 0; i < textArray.length; i++) {
+        textHTML += textArray[i];
+        textHTML += '<br><br>';
+    }
+    textHTML = textHTML.replace(/<center>/g, '');
+    textHTML = textHTML.replace(/<\/center>/g, '');
+    return textHTML;
+}
 
 function setAudio(layerData, container) {
     let audioTopPadding = 0.2;
@@ -436,7 +507,6 @@ const getScrollBarOption = (contentsW, scrollBarH, container, layerData, pageSiz
 function createElements() {
     createMuralBackground();
     createLayers();
-    createCloseMuralButton();
     toggleMuralVisibility();
 }
 
@@ -459,22 +529,6 @@ function updateImageSize() {
     }
 
     canLoadMural = true;
-}
-
-function createCloseMuralButton() {
-    closeMuralButtongfx = new Graphics().texture(closeButtonUI, 0xffffff, 0, 0, 32, 32);
-    closeMuralButtongfx.zIndex = 99999999;
-    closeMuralButtongfx.x = window.innerWidth * 0.95;
-    closeMuralButtongfx.y = -window.innerHeight * 0.98;
-    closeMuralButtongfx.interactive = true;
-    closeMuralButtongfx.buttonMode = true;
-    closeMuralButtongfx.cursor = 'pointer';
-    closeMuralButtongfx.hitArea = new Rectangle(0, 0, 32, 32);
-    closeMuralButtongfx.on('pointerdown', () => {
-        toggleMuralVisibility();
-    });
-    isMobile ? closeMuralButtongfx.scale.set(5) : closeMuralButtongfx.scale.set(3);
-    viewport.addChild(closeMuralButtongfx);
 }
 
 function createMap() {
@@ -581,7 +635,8 @@ function create_map_collider() {
             x = layerGfx.toGlobal(centroid).x - popupWidth * 1.5;
             y = layerGfx.toGlobal(centroid).y - popupHeight/2;
         }
-        initScrollBar(app.stage, app.canvas, description, x, y, true, 1);
+        // initScrollBar(app.stage, app.canvas, description, x, y, true, 1);
+        initPopup(description, true);
     });
     mapBgGraphics.addChild(layerGfx);
 }
@@ -593,14 +648,14 @@ function toggleMuralVisibility() {
         isMuralVisible = false;
         mapBgGraphics.visible = true;
         viewport.plugins.pause('drag')
-        closeMuralButtongfx.visible = false;
         viewport.moveCenter(viewPortCenter.x, viewPortCenter.y);
+        closeMuralButton.style.display = 'none';
     } else {
         bgGraphics.visible = true;
         isMuralVisible = true;
         mapBgGraphics.visible = false;
-        closeMuralButtongfx.visible = true;
-        viewport.plugins.resume('drag')
+        viewport.plugins.resume('drag');
+        closeMuralButton.style.display = 'block';
     }
 }
 
@@ -741,11 +796,19 @@ function create_layer_collider(i) {
 
         let layerData = findData(layerIndex);
         if(layerData.hasText || layerData.hasAudio) {
-            initScrollBar(app.stage, app.canvas, layerData, newX, newY, false, 4);
+            // initScrollBar(app.stage, app.canvas, layerData, newX, newY, false, 4);
+            initPopup(layerData);
             viewport.pause = true;
         }
     });
     bgGraphics.addChild(layerGfx);
+}
+
+function subscribeToEvents() {
+    closeMuralButton.style.display = 'none';
+    closeMuralButton.onclick = () => {
+        toggleMuralVisibility();
+    }
 }
 
 function getCentroid(points) {
@@ -763,15 +826,32 @@ function getCentroid(points) {
 
 function closePopup() {
     viewport.pause = false;
-    app.stage.removeChild(currentPopupContainer);
-    if(popupAudioElement) {
-        popupAudioElement.style.display = 'none';
-        popupAudioElement.pause();
+    // app.stage.removeChild(currentPopupContainer);
+    if(currentPopupContainer) {
+        let muralButton = currentPopupContainer.getElementsByClassName('mural-button')[0];
+        muralButton && muralButton.remove();
+        currentPopupContainer.style.display = 'none';
+        currentPopupContainer.style.height = 50 + 'vh';
     }
-    if(currentPopupScrollbar) {
-        app.stage.removeChild(currentPopupScrollbar);
-        currentPopupScrollbar.destroy();
-    }
+    let popupAudioElement = document.getElementById('audio');
+    popupAudioElement.style.display = 'none';
+    popupAudioElement.pause();
+
+    let popupHeader = document.getElementsByClassName('popup-header')[0];
+    // popupHeader.style.display = '';
+    popupHeader.style.borderBottom = '1px solid #444';
+
+    let popupContentContainer = document.getElementsByClassName('popup-content')[0];
+    popupContentContainer.style.display = '';
+
+    // if(popupAudioElement) {
+    //     popupAudioElement.style.display = 'none';
+    //     popupAudioElement.pause();
+    // }
+    // if(currentPopupScrollbar) {
+    //     app.stage.removeChild(currentPopupScrollbar);
+    //     currentPopupScrollbar.destroy();
+    // }
 }
 
 function findData(index) {
@@ -804,15 +884,15 @@ app.stage.eventMode = 'static';
 app.stage.hitArea = app.screen;
 
 app.ticker.add((time) => {
-    if(closeMuralButtongfx) {
-        if(isMobile) {
-            closeMuralButtongfx.x = viewport.center.x - 16;
-            closeMuralButtongfx.y = viewport.center.y - window.innerHeight * 0.48;
-        } else {
-            closeMuralButtongfx.x = viewport.center.x - 16;
-            closeMuralButtongfx.y = viewport.center.y - window.innerHeight * 0.48;
-        }
-    }
+    // if(closeMuralButtongfx) {
+    //     if(isMobile) {
+    //         closeMuralButtongfx.x = viewport.center.x - 16;
+    //         closeMuralButtongfx.y = viewport.center.y - window.innerHeight * 0.48;
+    //     } else {
+    //         closeMuralButtongfx.x = viewport.center.x - 16;
+    //         closeMuralButtongfx.y = viewport.center.y - window.innerHeight * 0.48;
+    //     }
+    // }
 });
 
 Ticker.shared.add((e) => {
