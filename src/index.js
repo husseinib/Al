@@ -93,7 +93,7 @@ const data = [
     { index: 27, text: '', audio: '', hasText : true, hasAudio : true, hasHover : false },
 ]
 
-const description = { index: -1, audio: '', hasText : true, hasAudio : false, text: '<center><strong>Reclaiming history through story and memory Mural</strong></center><br><br><center><em>Description Paragraph</em></center><br><br>This mural is an abstraction of the conditions and descriptions collected from interviews with Mandaeans in the diaspora and non-Mandaean Iraqi communities from Nassryah and Amara cities and who lived side by side with their Mandaean neighbours before their departure from Iraq. The mural is interactive and contains both audio and text that convey memories, belonging and anecdotes of when these communities enjoyed sharing space, relations and intimate social ties. The mural is meant to be felt rather than read, as it is not a historical or religious translation, but an artistic rendering of recorded social feelings.<br><br>هذه الجدارية عبارة عن تجريد للأحوال والأوصاف التي تم جمعها من المقابلات مع المندائيين في الشتات والمجتمعات العراقية غير المندائية من مدينتي الناصرية والعمارة والذين عاشوا جنبًا إلى جنب مع جيرانهم المندائيين قبل مغادرتهم العراق. اللوحة الجدارية تفاعلية وتحتوي على صوت ونص ينقل الذكريات والانتماء والحكايات عندما استمتعت هذه المجتمعات بتقاسم المساحة والعلاقات الاجتماعية الحميمة. من المفترض أن يتم الشعور بالجدارية وليس قرائتها حرفيا ، لأنها ليست ترجمة تاريخية أو دينية، ولكنها عرض فني للمشاعر الاجتماعية المسجلة٠' };
+const description = { index: -1, audio: '', hasText : true, hasAudio : false, text: '<center><strong>Reclaiming history through story and memory Mural</strong></center><br><br><center><em>Description Paragraph</em></center><br><br>This mural is an abstraction of the conditions and descriptions collected from interviews with Mandaeans in the diaspora and non-Mandaean Iraqi communities from Nassryah and Amara cities and who lived side by side with their Mandaean neighbours before their departure from Iraq. The mural is interactive and contains both audio and text that convey memories, belonging and anecdotes of when these communities enjoyed sharing space, relations and intimate social ties. The mural is meant to be felt rather than read, as it is not a historical or religious translation, but an artistic rendering of recorded social feelings.<br><br>هذه الجدارية عبارة عن تجريد للأحوال والأوصاف التي تم جمعها من المقابلات مع المندائيين في الشتات والمجتمعات العراقية غير المندائية من مدينتي الناصرية والعمارة والذين عاشوا جنبًا إلى جنب مع جيرانهم المندائيين قبل مغادرتهم العراق. اللوحة الجدارية تفاعلية وتحتوي على صوت ونص ينقل الذكريات والانتماء والحكايات عندما استمتعت هذه المجتمعات بتقاسم المساحة والعلاقات الاجتماعية الحميمة. من المفترض أن يتم الشعور بالجدارية وليس قرائتها حرفيا ، لأنها ليست ترجمة تاريخية أو دينية، ولكنها عرض فني للمشاعر الاجتماعية المسجلة٠ ' };
 
 let canLoadMural = false;
 
@@ -320,6 +320,7 @@ function initPopup(layerData, hasMuralButton = false) {
     closePopup();
     let popup = document.getElementsByClassName('popup-container')[0];
     currentPopupContainer = popup;
+    currentPopupContainer.style.height = 50 + 'vh';
     currentPopupContainer.style.display = 'flex';
 
     let popupHeader = document.getElementsByClassName('popup-header')[0];
@@ -357,8 +358,13 @@ function initPopup(layerData, hasMuralButton = false) {
         if(audioOnly) {
             let popupContentContainer = document.getElementsByClassName('popup-content')[0];
             popupContentContainer.style.display = 'none';
-            popup.style.height = 9.5 + 'vh';
-            popupHeader.style.borderBottom = 'none';
+            if(isMobile) {
+                popup.style.height = 12 + 'vh';
+                popupHeader.style.borderBottom = 'none';
+            } else {
+                popup.style.height = 9.5 + 'vh';
+                popupHeader.style.borderBottom = 'none';
+            }
         }
         if(textOnly) {
             popupHeader.style.borderBottom = 'none';
@@ -608,36 +614,46 @@ function create_map_collider() {
     layerGfx.alpha = 0;
     layerGfx.zIndex = 970;
     layerGfx.interactive = true;
+    layerGfx.eventMode = 'static';
     layerGfx.cursor = 'pointer';
     layerGfx.hitArea = new Polygon(points);
-    layerGfx.on('pointerover', () => {
-        highlightMap();
-    });
-    layerGfx.on('pointerout', () => {
-        unhighlightMap();
-    });
-    layerGfx.on('pointerdown', (e) => {
-        if(isMobile) {
-            CONTENTS_W = window.innerWidth * 0.8;
-            SCROLLBAR_H = window.innerHeight * 0.6;
-            SCROLLBAR_W = 16 * 2;
-        }
-
-        const popupWidth = CONTENTS_W;
-        const popupHeight = SCROLLBAR_H;
-        let x = 0;
-        let y = 0;
-        if(isMobile) {
-            x = SCREENWIDTH / 2 - popupWidth / 2;
-            y = SCREENHEIGHT / 2 - popupHeight / 2;
-        } else {
-            let centroid = getCentroid(points);
-            x = layerGfx.toGlobal(centroid).x - popupWidth * 1.5;
-            y = layerGfx.toGlobal(centroid).y - popupHeight/2;
-        }
-        // initScrollBar(app.stage, app.canvas, description, x, y, true, 1);
-        initPopup(description, true);
-    });
+    if(isMobile) {
+        // mobile events
+        layerGfx.addListener('touchstart', () => {
+            console.log('touchstart');
+            initPopup(description, true);
+        });
+    } else {
+        layerGfx.on('pointerover', () => {
+            highlightMap();
+        });
+        layerGfx.on('pointerout', () => {
+            unhighlightMap();
+        });
+        layerGfx.on('pointerdown', (e) => {
+            console.log('pointerdown');
+            if(isMobile) {
+                CONTENTS_W = window.innerWidth * 0.8;
+                SCROLLBAR_H = window.innerHeight * 0.6;
+                SCROLLBAR_W = 16 * 2;
+            }
+    
+            const popupWidth = CONTENTS_W;
+            const popupHeight = SCROLLBAR_H;
+            let x = 0;
+            let y = 0;
+            if(isMobile) {
+                x = SCREENWIDTH / 2 - popupWidth / 2;
+                y = SCREENHEIGHT / 2 - popupHeight / 2;
+            } else {
+                let centroid = getCentroid(points);
+                x = layerGfx.toGlobal(centroid).x - popupWidth * 1.5;
+                y = layerGfx.toGlobal(centroid).y - popupHeight/2;
+            }
+            // initScrollBar(app.stage, app.canvas, description, x, y, true, 1);
+            initPopup(description, true);
+        });
+    }
     mapBgGraphics.addChild(layerGfx);
 }
 
