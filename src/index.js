@@ -320,7 +320,13 @@ function initPopup(layerData, hasMuralButton = false) {
     closePopup();
     let popup = document.getElementsByClassName('popup-container')[0];
     currentPopupContainer = popup;
-    currentPopupContainer.style.height = 50 + 'vh';
+    if(isMobile) {
+        currentPopupContainer.style.height = '80%';
+        currentPopupContainer.style.width = '80%';
+    } else {
+        currentPopupContainer.style.height = '70%'
+        currentPopupContainer.style.width = '50%';
+    }
     currentPopupContainer.style.display = 'flex';
 
     let popupHeader = document.getElementsByClassName('popup-header')[0];
@@ -619,6 +625,7 @@ function create_map_collider() {
     layerGfx.hitArea = new Polygon(points);
     if(isMobile) {
         // mobile events
+        highlightMap();
         layerGfx.addListener('touchstart', () => {
             console.log('touchstart');
             initPopup(description, true);
