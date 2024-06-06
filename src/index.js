@@ -113,8 +113,8 @@ async function fetchFont() {
 }
 
 function loadShapesData() {
-    mapShape = getMapShapes();
-    shapes = getLayerShapes();
+    mapShape = getMapShapes().shapes[0];
+    shapes = getLayerShapes().shapes;
 }
 
 function importImportantTextures() {
