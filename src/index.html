@@ -5,6 +5,13 @@
     <meta content="width=device-width, initial-scale=1" name="viewport" />
     <meta http-equiv="Content-Security-Policy" content="default-src *; style-src * 'self' 'unsafe-inline' 'unsafe-eval'; script-src * 'self' 'unsafe-inline' 'unsafe-eval';">
     <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Libre Franklin', sans-serif;
+        }
+
         :root {
             --scrollbar-color: #969381;
         }
@@ -23,6 +30,11 @@
         audio::-webkit-media-controls-panel {
             background-color: #CECAAE;
             color: #837D5A;
+        }
+
+        audio::-webkit-media-controls-current-time-display,
+        audio::-webkit-media-controls-time-remaining-display {
+            display: none;
         }
 
         canvas {
@@ -168,6 +180,81 @@
                 height: 90%;
             } */
         }
+
+        /* Extra small devices (portrait phones, less than 576px) */
+        @media (max-width: 575.98px) {  
+            iframe {
+                height: 100%;
+            }
+
+            .fullscreen-btn {
+                height: 5%;
+                width: 30%;
+            }
+        }
+        
+        /* Small devices (landscape phones, 576px and up) */
+        @media (min-width: 576px) and (max-width: 767.98px) {  
+            iframe {
+                height: 100%;
+            }
+
+            .fullscreen-btn {
+                height: 5%;
+                width: 30%;
+            }
+
+            body {
+                /* set height to middle of the screen but in vh unit */
+                height: 50vh;
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
+                font-family: 'Libre Franklin', sans-serif;
+            }
+        }
+        
+        /* Medium devices (tablets, 768px and up) */
+        @media (min-width: 768px) and (max-width: 991.98px) {  
+            iframe {
+                height: 100%;
+            }
+
+            .fullscreen-btn {
+                height: 5%;
+                width: 30%;
+            }
+        }
+        
+        /* Large devices (desktops, 992px and up) */
+        @media (min-width: 992px) and (max-width: 1199.98px) {  
+            iframe {
+                height: 100%;
+            }
+
+            .fullscreen-btn {
+                height: 5%;
+                width: 30%;
+            }
+        }
+        
+        /* Extra large devices (large desktops, 1200px and up) */
+        @media (min-width: 1200px) {  
+            iframe {
+                height: 100%;
+                width: 80%;
+            }
+
+            .fullscreen-btn {
+                background-color: #CECAAE;
+                height: 5%;
+                width: 10%;
+                position: fixed;
+                top: 0px;
+                left: 40%;
+                transform: translateX(-50%);
+            }
+        }        
     </style>
 </head>
 <body>

@@ -7,9 +7,10 @@ import { ScrollBarViewUtil } from "@masatomakino/pixijs-basic-scrollbar";
 import TWEEN from "@tweenjs/tween.js";
 import AssetsProgressBar from './AssetsProgressBar.js'
 
-const SCREENWIDTH = window.innerWidth;
-const SCREENHEIGHT = window.innerHeight;
-let isMobile = isMobileAndTablet() || isMobileCheck();
+var SCREENWIDTH = window.innerWidth;
+var SCREENHEIGHT = window.innerHeight;
+let isMobile = isMobileAndTablet();
+// let isMobile = isMobileAndTablet() || isMobileCheck();
 console.log(isMobile);
 
 function isMobileAndTablet() {
@@ -107,6 +108,11 @@ fetchFont().then(() => {
     subscribeToEvents();
 });
 
+function clearEverything() {
+    // isMuralVisible = true;
+    app.stage.removeChildren();
+}
+
 async function fetchFont() {
     font = await Assets.load('./assets/fonts/LibreFranklin-Regular.ttf');
     console.log('Font loaded');
@@ -163,7 +169,7 @@ function init() {
     imageWidth = screenWidth;
     imageHeight = screenHeight;
 
-    viewport.plugins.pause('drag')
+    viewport.plugins.pause('drag');
 }
 
 function calculateImageWidths() {
@@ -928,22 +934,29 @@ Ticker.shared.add((e) => {
     TWEEN.update(performance.now());
 });
 
-// on resize event
-// window.addEventListener('resize', resize);
+window.addEventListener('message', event => {
+    console.log(event.origin);
+    console.log(event.data);
+    if (event.origin === 'http://172.31.128.1:8080') {
+        if (typeof event.data !== 'object') {
+            document.body.className = event.data;
+        } else {
+            // console.log('old',SCREENWIDTH, SCREENHEIGHT);
+            // SCREENWIDTH = window.innerWidth;
+            // SCREENHEIGHT = window.innerHeight;
+            // app.renderer.resize(SCREENWIDTH, SCREENHEIGHT);
+            // // viewport.resize(SCREENWIDTH, SCREENHEIGHT, SCREENWIDTH, SCREENHEIGHT);
+            // // fit(true, app.stage, SCREENWIDTH, SCREENHEIGHT, SCREENWIDTH, SCREENHEIGHT);
+            // // console.log('new',SCREENWIDTH, SCREENHEIGHT);
+            // clearEverything();
+            // init();
+            // createMap();
+            // createElements(true);
+            // // updateImageSize();
 
-// function resize() {
-//     console.log('Resize');
-//     const scaleFactor = Math.min(
-//       window.innerWidth / app.screen.width,
-//       window.innerHeight / app.screen.height
-//     );
-  
-//     const newWidth = Math.ceil(app.screen.width * scaleFactor);
-//     const newHeight = Math.ceil(app.screen.height * scaleFactor);
-  
-//     console.log('New width: ', app.renderer.view);
-//     app.renderer.view.screen.width = `${newWidth}px`;
-//     app.renderer.view.screen.height = `${newHeight}px`;
-  
-//     app.renderer.resize(newWidth, newHeight);
-//   }
+            // console.log('viewport is paused?', viewport.pause);
+        }
+    } else {
+        return;
+    }
+});
